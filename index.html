@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أعمال الأيام</title>
+    
+    <!-- === إضافات PWA (Progressive Web App) === -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/Ra9c5H4.png">
+    <meta name="theme-color" content="#FFFFFF">
+    <!-- ========================================== -->
+
+    <!-- تحميل Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- تحميل خط Cairo (أفضل للعربية) بدلاً من Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* تطبيق الخط الافتراضي وتعيين الخلفية المتدرجة */
+        body {
+            font-family: 'Cairo', sans-serif;
+            /* خلفية متدرجة بدلاً من الصورة لمزيد من السرعة والموثوقية */
+            background-color: #f0f4f8; /* لون احتياطي */
+            background-image: linear-gradient(to bottom right, #f0f4f8, #dbeafe, #f0f4f8);
+            background-attachment: fixed;
+        }
+
+        /* تخصيص ستايل شريط مشغل الصوت */
+        audio::-webkit-media-controls-panel {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 0.5rem;
+        }
+        audio {
+            border-radius: 0.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* إخفاء النافذة المنبثقة افتراضياً */
+        #daily-modal-backdrop {
+            display: none;
+        }
+        
+        /* ستايل لزر النسخ */
+        .copy-btn {
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.6;
+            transition: opacity 0.2s, transform 0.2s;
+            padding: 0 0.5rem;
+        }
+        .copy-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        /* ستايل للأقسام القابلة للطي (details/summary) */
+        details {
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        summary {
+            padding: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #1d4ed8; /* blue-800 */
+            list-style: none; /* إخفاء السهم الافتراضي */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* إضافة سهم مخصص */
+        summary::after {
+            content: '◀';
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+        details[open] summary::after {
+            transform: rotate(90deg);
+        }
+        .details-content {
+            padding: 0 1rem 1rem 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            line-height: 1.7;
+            color: #374151; /* gray-700 */
+        }
+        
+        /* ستايل للبطاقات (بدلاً من hr) */
+        .content-card {
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-900">
+
+    <!-- === النافذة المنبثقة للملاحظة اليومية === -->
+    <div id="daily-modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+        <div id="daily-modal-content" class="w-full max-w-md p-6 bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 text-center space-y-4">
+            <h3 class="text-xl font-bold text-blue-800">ملاحظة هامة</h3>
+            <p class="text-base font-medium text-gray-800 leading-relaxed">
+                يبدأ اليوم الشرعي ( ليلاً ثم نهاراً). إذا كنت مضطراً لفعل أمرٍ منهي عنه او لم ينصح القيام بفعله فعليك التصدق أولاً مع الاستغفار وقراءة آية الكرسي باستمرار.
+            </p>
+            <button id="close-modal-btn" class="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all">
+                إغلاق
+            </button>
+        </div>
+    </div>
+    <!-- ======================================== -->
+
+
+    <!-- حاوية رئيسية لتوسيط اللوح الزجاجي (واجهة اختيار الأيام) -->
+    <div id="main-container" class="min-h-screen w-full flex items-center justify-center p-4">
+
+        <div class="w-full max-w-md p-6 md:p-8 space-y-8 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
+            
+            <h2 class="text-3xl font-bold text-center text-gray-900">
+                أعمال الأيام
+            </h2>
+
+            <div class="flex flex-wrap justify-center gap-5 md:gap-6 text-center">
+
+                <!-- كل يوم من أيام الأسبوع -->
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الجمعة">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الجمعة</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="السبت">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">السبت</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الأحد">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الأحد</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الاثنين">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الاثنين</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الثلاثاء">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الثلاثاء</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الأربعاء">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الأربعاء</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الخميس">
+                    <div class="w-full h-full bg-white/30 rounded-full flex items-center justify-center border border-white/40 transition-all duration-300 group-hover:bg-white/50 group-hover:scale-105 shadow-md">
+                        <span class="text-lg font-semibold text-gray-800">الخميس</span>
+                    </div>
+                </div>
+
+            </div>
+            
+        </div> <!-- نهاية اللوح الزجاجي -->
+    </div>
+
+    <!-- حاوية الصفحة الكاملة (مخفية افتراضياً) -->
+    <div id="day-page-container" class="min-h-screen w-full flex items-center justify-center p-2 md:p-4 hidden">
+        <div class="w-full max-w-4xl p-4 md:p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
+            
+            <button id="back-button" class="mb-4 text-gray-800 bg-black/10 px-4 py-2 rounded-lg hover:bg-black/20 transition-all">&larr; رجوع</button>
+            <h2 id="page-title" class="text-3xl font-bold text-center text-gray-900"></h2>
+            
+            <div id="page-content" class="mt-6 text-right min-h-[200px] max-h-[70vh] overflow-y-auto p-2 md:p-4 rounded-lg">
+                <!-- المحتوى سيتم حقنه هنا بواسطة JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- عنصر مؤقت لعملية النسخ (مخفي) -->
+    <textarea id="copy-helper" class="absolute -top-full"></textarea>
+    
+    <!-- رسالة تأكيد النسخ (مخفية) -->
+    <div id="copy-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg transition-all duration-300 opacity-0 transform translate-y-5">
+        تم النسخ إلى الحافظة!
+    </div>
+
+
+    <script>
+        // --- 1. تسجيل Service Worker ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js') // تم تغيير المسار ليعمل بشكل صحيح
+                    .then(registration => {
+                        console.log('Service Worker registered successfully:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        // --- نهاية تسجيل Service Worker ---
+
+
+        // --- 2. [التصحيح الكبير] فصل البيانات عن الكود ---
+        // كل محتوى الأيام أصبح هنا، مما يسهل التعديل والصيانة
+        const daysData = {
+            "الجمعة": {
+                sections: [
+                    { type: 'card', content: '✅ يوم صالح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '<ul class="list-disc list-inside space-y-2 pr-4"><li>يستحب فيه الغُسل قبل الزوال لصلاة الجمعة .</li><li>المقاربة الزوجية اليوم بعد فضيلة صلاة العصر مستحبة والمولود الحاصل عالم مشهور في العالم ، وكراهيتها قبل صلاة الظهر .</li><li>من أراد الحجامة فليحتجم الجمعة عصراً</li><li>تقليم الأظافر الجمعة ورد عن النبي (صلى الله عليه وآله): (تقليم الأظافر يوم الجمعه يؤمن الجذام ، والجنون ، والبرص ، والعمى ، وإن لم تحتج فحكها) .وفي خبر آخر يدر الرزق وهو أهم يوم لتقليم الأظافر فمن قلم أظافره يوم الجمعة اخرج الله منه الداء وأدخله فيه الدواء.</li></ul>' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والضحى.' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'اللهم صل على محمد وآل محمد وعجل فرجهم وأهلك عدوهم ، ياالله يا هو', subtext: 'العدد ( ١٠٠ ) مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> المريدين + الزاهدين' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة مولانا صاحب العصر والزمان روحي فداه .' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'ركعتين من غير صلاة الجمعة تقرأ في الأولى : سورة إبراهيم وفي الثانية سورة الحجر ، لم يصبه فقر أبداً ولا جنون ولا بلوى .' },
+                    { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا نور', subtext: 'العدد ( ٢٥٦ ) مرة.' },
+                    { type: 'audio', title: 'مناجاة المريدين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/evo3qhfar821.mp3' },
+                    { type: 'audio', title: 'مناجاة الزاهدين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/tk33q7ozib7m.mp3' }
+                ]
+            },
+            "السبت": {
+                sections: [
+                    { type: 'card', content: '❎ المقاربة الزوجية ( ليلة الأحد ) غير جيدة والمولود فيه يكون مشؤوما ثقيلاً.', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '✅ يصح فيه ( الحجامة والفصد) .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '❎ يكره تقليم الاظافر يوم السبت (من قلم أظافره يوم السبت وقعت الآكلة في أصابعه)', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '❎ لا يصلح فيه شراء أو خياطة أو أقتناء الثياب والملابس.', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة إلى الضحى والعصر و رديئة ،عند الزوال والعشاء .' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يارب العالمين يا رحمن يا رحيم', subtext: '( ١٠٠ )مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> المحبين + الشاكين + المطيعين لله' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة النبي الاكرم صلى الله عليه وآله وسلم .' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'روى السيد ابن طاووس عن الإمام العسكري عليه‌السلام قال : من صلّى يوم السبت أربع ركعات يقرأ في كل ركعة فاتحة الكتاب وقل هو الله أحد وآية الكرسي كتبه الله عزَّ وجلَّ في درجة النبيين والشهداء والصالحين وحسن أولئك رفيقا .' },
+                    { type: 'copyable', title: '📿 ذكر يوم السبت:', text: 'يا غني', subtext: 'العدد ( ١٠٦٠ ) مرة‏' }
+                ]
+            },
+            "الأحد": {
+                sections: [
+                    { type: 'card', content: '✅ المقاربة الزوجية جيدة والمولود الحاصل حافظا لکتاب الله.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ استحباب الحجامة . بعد الزوال .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '❎ تقليم الأظافر غير جيد ، ويذهب البركه ، لما روي (من قلم أظافره يوم الأحد ذهبت البركه من يده) .', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '❎ لا يصلح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والضحى' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا ذا الجلال والاكرام يا واحد يا أحد', subtext: '( ١٠٠ )مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الخائفين + المتوسلين' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة أَميرِ المُؤمِنين والسيدة الزَّهراءِ سَلامُ الله عَليهما' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'من صلى يوم الأحد أربع ركعات يقرء في كل ركعة بفاتحة الكتاب وآمن الرسول👇 مرة، كتب الله بعدد كل نصراني ونصرانية حسنات، وأعطاه الله تعالى ثواب الف nabi، وكتب له ألف حجة وعمرة وكتب له بكل ركعة ألف صلاة، وأعطاه الله في الجنة بكل حرف مدينة من مسك .' },
+                    { type: 'copyable', title: '📿 ذكر يوم الأحد:', text: 'يا فتاح', subtext: 'العدد (٤٨٩) مرة' }
+                ]
+            },
+            "الاثنين": {
+                sections: [
+                    { type: 'card', content: '✅ يوم الإثنين يوم مناسب لتقليم الأظافر و له بركات من قبيل أنه يصبح قارئ و حافظ لكتاب الله الكريم.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ يصلح للمقاربة الزوجية . ليلاً', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ من أراد الحجامة فليحتجم يوم الاثنين .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ يوم صالح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة ، حين طلوع الشمس والمغرب والعشاء' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا قاضي الحاجات يا فرد يا صمد', subtext: '( ١٠٠ مرة )' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> المفتقرين + الراجين' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة الإمامين الحسن والحسين عليهما السلام' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'روى السيد ابن طاووس عن الإمام العسكري عليه‌السلام قال : من صلّى يوم الاثنين عشر ركعات يقرأ في كل ركعة فاتحة الكتاب وقل هو الله أحد عشراً جعل اللّه له إلى يوم الجمعة نوراً يضي منه الموقف حتى يغبطه به جميع من خلق الله في ذلك اليوم .' },
+                    { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا لطيف', subtext: 'العدد ( ١٢٩ ) مرة' }
+                ]
+            },
+            "الثلاثاء": {
+                sections: [
+                    { type: 'card', content: '✅ يوم صالح للحجامة والفصد.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ يوم صالح للمقاربة الزوجية .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '❎ التقليم غير جيد ، يخاف الهلاك ، للمروي عن النبي( صلى الله عليه وآله): (من قلم أظافره يوم الثلاثاء يخاف الهلاك عليه).', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '❎ لا يصلح لشراء وخياطة واقتناء الثياب والملابس .', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند الظهر والعشاء و رديئة عند الضحى والعصر' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا أرحم الراحمين يا حي يا قيوم', subtext: 'العدد ( ١٠٠ ) مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الراغبين + العارفين .' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة علي بن الحسين السجاد ومحمد بن علي الباقر ، وجعفر بن محمد الصادق' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'روى السيد ابن طاووس عن الإمام العسكري عليه‌السلام قال : من صلّى يوم الثلاثاء ست ركعات يقرأ في كل ركعة فاتحة الكتاب وآية : آمن الرسول إلى آخرها وسورة إذا زلزلت مرة واحدة غفر الله له ذنوبه حتى يخرج منها كيوم ولدته أمّه.' },
+                    { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا قابض', subtext: 'العدد ( ٩٠٣ ) مرة' }
+                ]
+            },
+            "الأربعاء": {
+                sections: [
+                    { type: 'card', content: '❎ توقّوا الحجامة والنورة يوم الاربعاء . ليلاً', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '✅ المقاربة الزوجية جيدة و المولود الحاصل عالم من العلماء أو حاكم من الحكام .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ خياطة أو أقتناء أو شراء الثياب والملابس فيها منفعة.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '❎ تقليم الأظافر يوم الاربعاء غير جيد ويورث سوء الخلق ، كما جاء في بعض الأخبار عن أئمة أهل البيت عليهم السلام: (من قلم أظافره يوم الأربعاء يصير سيء الخلق) .', style: 'text-red-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند الزوال و رديئة ،عند العصر.' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا حي القيوم يا حنان يا منان', subtext: 'العدد ( ١٠٠ ) مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الذاكرين + الشاكرين' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة الائمة عليهم السلام موسى بن جعفر الكاظم، وعلي بن موسى الرضا، ومحمد علي جواد ، وعلي بن محمد الهادي ( عليهم السلام جميعاً)' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'روى السيد ابن طاووس عن الإمام العسكري عليه‌السلام قال : من صلى يوم الأربعاء أربع ركعات يقرأ في كل ركعة الحمد والاخلاص وسورة القدر مرة واحدة تاب الله عليه من كل ذنب وزوّجه بزوجة من الحور العين.' },
+                    { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا متعال', subtext: 'العدد ( ٥٤١ ) مرة' }
+                ]
+            },
+            "الخميس": {
+                sections: [
+                    { type: 'card', content: '✅ المقاربة الزوجية ليلة الجمعة جيدة. والمولود فيه مرزوقاً طويل العمر . وصلحت سريرته وعاش سعيداً .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ يوم الخميس يوم مناسب جداً لتقليم الأظافر ، يجلب صحة الجسم و شفاء للآلام..', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ استحباب الحجامة والفصد يوم الخميس.', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '✅ يصلح فيه شراء أو خياطة أو أقتناء الثياب والملابس بل وردت أن فيها منفعة .', style: 'text-green-700 font-semibold' },
+                    { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والمغرب' },
+                    { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'لا اله الا الله الملك الحق المبين ، يا ذا الجلال والاكرام', subtext: 'العدد ( ١٠٠ ) مرة.' },
+                    { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الزاهدين + المعتصمين' },
+                    { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة الإمام الحسن بن علي العسكري عليهما السلام .' },
+                    { type: 'details', title: '۞ صلاة اليوم:', content: 'روي عن النبي ( صلى الله عليه و آله ) انه قال : من صلى يوم الخميس اربع ركعات ، يقرأ في الاولى منهن الحمد مرة و احدى عشر مرة قل هو الله احد ، و في الثانية الحمد مرة واحدى و عشرين مرة قل هو الله احد ، و في الثالثة الحمد مرة و واحدى و ثلاثين مرة قل هو الله احد ، و في الرابعة الحمد مرة و احدى و اربعين مرة قل هو الله احد ، كل ركعتين بتسليم ، فاذا سلم في الرابعة قرأ قل هو الله احد احدى و خمسين مرة ، و قال اللهم صل على محمد و آل محمد احدى و خمسين مرة ثم يسجد و يقول في سجوده ( يا الله ) مائة مرة ، و تدعو بما شئت .' },
+                    { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا رزاق', subtext: '٣٠٨ مرة' }
+                ]
+            }
+        };
+
+        // --- 3. جلب عناصر الـ DOM ---
+        const modalBackdrop = document.getElementById('daily-modal-backdrop');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const dayButtons = document.querySelectorAll('.day-button');
+        const mainContainer = document.getElementById('main-container');
+        const dayPageContainer = document.getElementById('day-page-container');
+        const backButton = document.getElementById('back-button');
+        const pageTitle = document.getElementById('page-title');
+        const pageContent = document.getElementById('page-content');
+        const copyToast = document.getElementById('copy-toast');
+        const copyHelper = document.getElementById('copy-helper');
+
+        // --- 4. منطق النافذة المنبثقة اليومية (لا تغيير) ---
+        (function showDailyModal() {
+            const today = new Date().toDateString();
+            const lastShownDate = localStorage.getItem('lastModalShownDate');
+
+            if (lastShownDate !== today) {
+                modalBackdrop.style.display = 'flex';
+                localStorage.setItem('lastModalShownDate', today);
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                modalBackdrop.style.display = 'none';
+            });
+            modalBackdrop.addEventListener('click', (e) => {
+                if (e.target === modalBackdrop) {
+                    modalBackdrop.style.display = 'none';
+                }
+            });
+        })();
+
+        // --- 5. منطق تمييز اليوم الحالي (لا تغيير) ---
+        (function highlightToday() {
+            const dayMap = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+            try {
+                const todayIndex = new Date().getDay();
+                const todayArabic = dayMap[todayIndex];
+
+                dayButtons.forEach(button => {
+                    const dayName = button.getAttribute('data-day');
+                    if (dayName === todayArabic) {
+                        const iconCircle = button.querySelector('div');
+                        if (iconCircle) {
+                            iconCircle.classList.remove('bg-white/30', 'border-white/40', 'group-hover:bg-white/50');
+                            iconCircle.classList.add('bg-blue-600', 'border-blue-400', 'shadow-lg', 'scale-105');
+                            
+                            const textSpan = iconCircle.querySelector('span');
+                            if (textSpan) {
+                                textSpan.classList.remove('text-gray-800');
+                                textSpan.classList.add('font-bold', 'text-white');
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("خطأ في تمييز اليوم الحالي:", error);
+            }
+        })();
+
+        // --- 6. [التحسين] دالة بناء محتوى الصفحة ---
+        // هذه الدالة تقرأ من كائن البيانات `daysData` وتنشئ الـ HTML
+        function renderDayPage(dayName) {
+            const data = daysData[dayName];
+            if (!data) {
+                pageContent.innerHTML = '<p class="text-center text-gray-700">لا يوجد محتوى لهذا اليوم حالياً.</p>';
+                return;
+            }
+
+            let html = '';
+            data.sections.forEach(section => {
+                const style = section.style || 'text-gray-800'; // ستايل افتراضي
+                
+                switch (section.type) {
+                    case 'card':
+                        html += `<div class="content-card ${style}">${section.content}</div>`;
+                        break;
+                    
+                    case 'copyable':
+                        // نستخدم data-text لتخزين النص المراد نسخه
+                        html += `
+                            <div class="content-card">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-lg font-semibold text-blue-800">${section.title}</h4>
+                                    <span class="copy-btn" data-text="${section.text}" title="نسخ">📋</span>
+                                </div>
+                                <p class="text-gray-900 italic pr-4 mt-2" dir="ltr">${section.text}</p>
+                                <p class="text-sm text-gray-600 pr-4 mt-1">${section.subtext}</p>
+                            </div>`;
+                        break;
+
+                    case 'details':
+                        html += `
+                            <details>
+                                <summary>${section.title}</summary>
+                                <div class="details-content">${section.content}</div>
+                            </details>`;
+                        break;
+
+                    case 'audio':
+                        html += `
+                            <div class="content-card">
+                                <p class="text-lg font-semibold text-blue-800 mb-2">${section.title}</p>
+                                <audio controls class="w-full rounded-lg shadow-sm bg-white/50 backdrop-blur-sm">
+                                    <source src="${section.url}" type="audio/mpeg">
+                                    متصفحك لا يدعم عنصر الصوت.
+                                </audio>
+                            </div>`;
+                        break;
+                }
+            });
+            pageContent.innerHTML = html;
+        }
+
+        // --- 7. [الميزة] دالة النسخ إلى الحافظة ---
+        function copyToClipboard(text) {
+            try {
+                // نستخدم العنصر المخفي لإجراء عملية النسخ
+                copyHelper.value = text;
+                copyHelper.select();
+                copyHelper.setSelectionRange(0, 99999); // لضمان التحديد الكامل
+                document.execCommand('copy');
+                
+                // إظهار رسالة تأكيد (Toast)
+                copyToast.classList.remove('opacity-0', 'translate-y-5');
+                copyToast.classList.add('opacity-100', 'translate-y-0');
+                
+                setTimeout(() => {
+                    copyToast.classList.remove('opacity-100', 'translate-y-0');
+                    copyToast.classList.add('opacity-0', 'translate-y-5');
+                }, 2000);
+
+            } catch (err) {
+                console.error('فشل النسخ إلى الحافظة: ', err);
+            }
+        }
+
+        // --- 8. ربط الأحداث ---
+        
+        // أزرار الأيام
+        dayButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const dayName = button.getAttribute('data-day');
+                pageTitle.textContent = `أعمال يوم ${dayName}`;
+                
+                // [التغيير] استدعاء الدالة الجديدة لإنشاء المحتوى
+                renderDayPage(dayName);
+                
+                mainContainer.classList.add('hidden');
+                dayPageContainer.classList.remove('hidden');
+                window.scrollTo(0, 0);
+            });
+        });
+
+        // زر الرجوع
+        backButton.addEventListener('click', () => {
+            dayPageContainer.classList.add('hidden');
+            mainContainer.classList.remove('hidden');
+            // إيقاف أي صوتيات قد تكون شغالة عند الرجوع
+            pageContent.querySelectorAll('audio').forEach(audio => audio.pause());
+        });
+        
+        // [الميزة] ربط حدث النسخ (باستخدام تفويض الأحداث)
+        pageContent.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-btn')) {
+                const textToCopy = e.target.getAttribute('data-text');
+                if (textToCopy) {
+                    copyToClipboard(textToCopy);
+                }
+            }
+        });
+
+    </script>
+
+</body>
+</html>
+
