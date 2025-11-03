@@ -2,7 +2,7 @@
   "name": "أعمال الأيام",
   "short_name": "أعمال الأيام",
   "description": "تطبيق لعرض أعمال أيام الأسبوع",
-  "start_url": "/index.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#FFFFFF",
