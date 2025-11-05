@@ -178,13 +178,19 @@
 
             </div>
             
-            <!-- === الزر المستطيل الجديد (تم تغيير النص و data-day) === -->
-            <div class="w-full text-center pt-4">
+            <!-- === الأزرار المستطيلة === -->
+            <div class="w-full text-center pt-4 space-y-4">
                 <div class="group cursor-pointer p-4 bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md day-button" data-day="المناجاة الخمس عشرة">
                     <span class="text-lg font-semibold text-gray-800">المناجاة الخمس عشرة</span>
                 </div>
+                
+                <!-- === الزر الجديد === -->
+                <div class="group cursor-pointer p-4 bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md day-button" data-day="ادعية">
+                    <span class="text-lg font-semibold text-gray-800">ادعية</span>
+                </div>
+                <!-- ================== -->
             </div>
-            <!-- =============================================== -->
+            <!-- ======================= -->
 
         </div> <!-- نهاية اللوح الزجاجي -->
     </div>
@@ -330,10 +336,8 @@
                     ]
                 },
                 
-                // --- [تم التحديث] المحتوى الجديد للزر المستطيل (تم تغيير المفتاح) ---
                 "المناجاة الخمس عشرة": {
                     sections: [
-                        { type: 'card', content: 'هذه صفحة للأعمال العامة أو المناجاات التي يمكن قراءتها في أي يوم.' },
                         { type: 'card', content: '<strong>۞ المناجاة الخمس عشرة:</strong>' },
                         { type: 'audio', title: 'مناجاة التائبين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/ooo13w88n93y.mp3' },
                         { type: 'audio', title: 'مناجاة الشاكين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/xsc2pjijopwh.mp3' },
@@ -351,8 +355,20 @@
                         { type: 'audio', title: 'مناجاة المعتصمين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/rxprxn0g3dt5.mp3' },
                         { type: 'audio', title: 'مناجاة الزاهدين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/tk33q7ozib7m.mp3' }
                     ]
+                },
+                
+                // --- [تمت الإضافة] ---
+                "ادعية": {
+                    sections: [
+                        { type: 'card', content: '<strong>۞ ادعية مختارة:</strong>' },
+                        { type: 'audio', title: 'دعاء الافتتاح', url: 'https://shiavoice.com/media/edaie/asdarat/mohammed_elhujerat/rewa3_ed3ie/miy1dpzafhkv.mp3' },
+                        { type: 'audio', title: 'دعاء العهد', url: 'https://shiavoice.com/media/edaie/asdarat/mohammed_elhujerat/rewa3_ed3ie/fhbi9i9shpgd.mp3' },
+                        { type: 'audio', title: 'دعاء الندبة', url: 'https://shiavoice.com/media/edaie/du3a_nudbe/yhd6n5mgs3nu.mp3' },
+                        { type: 'audio', title: 'دعاء السمات', url: 'https://shiavoice.com/media/edaie/du3a_elsmat/rn1rakrexfsi.mp3' },
+                        { type: 'audio', title: 'دعاء الصباح', url: 'https://shiavoice.com/media/edaie/du3a_seba7/rja2ng536rix.mp3' }
+                    ]
                 }
-                // --- نهاية المحتوى المحدث ---
+                // --- نهاية الإضافة ---
             };
 
             // --- 3. جلب عناصر الـ DOM ---
@@ -497,14 +513,15 @@
             // أزرار الأيام (بما في ذلك الزر الجديد)
             dayButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // --- [إضافة للتحقق] ---
                     console.log('تم الضغط على زر:', button.getAttribute('data-day'));
 
                     const dayName = button.getAttribute('data-day');
                     
-                    // --- [تحسين] تعديل العنوان ليتناسب مع الزر الجديد (تم التحديث) ---
+                    // --- [تحسين] تعديل العنوان ليتناسب مع الأزرار الجديدة ---
                     if (dayName === "المناجاة الخمس عشرة") {
                         pageTitle.textContent = "المناجاة الخمس عشرة";
+                    } else if (dayName === "ادعية") {
+                        pageTitle.textContent = "ادعية";
                     } else {
                         pageTitle.textContent = `أعمال يوم ${dayName}`;
                     }
