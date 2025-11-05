@@ -63,8 +63,12 @@
             background-color: rgba(255, 255, 255, 0.7);
             border: 1px solid rgba(0, 0, 0, 0.05);
             border-radius: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem; /* تقليل المسافة بين عناصر الأكورديون */
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: background-color 0.2s;
+        }
+        details:hover {
+             background-color: rgba(255, 255, 255, 0.9);
         }
         summary {
             padding: 1rem;
@@ -82,6 +86,7 @@
             content: '◀';
             font-size: 0.8rem;
             transition: transform 0.2s;
+            margin-right: 0.5rem;
         }
         details[open] summary::after {
             transform: rotate(90deg);
@@ -125,13 +130,17 @@
     <!-- حاوية رئيسية لتوسيط اللوح الزجاجي (واجهة اختيار الأيام) -->
     <div id="main-container" class="min-h-screen w-full flex items-center justify-center p-4">
 
-        <div class="w-full max-w-md p-6 md:p-8 space-y-8 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
+        <!-- [تحسين] تم تكبير العرض الأقصى قليلاً -->
+        <div class="w-full max-w-lg p-6 md:p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
             
             <h2 class="text-3xl font-bold text-center text-gray-900">
                 أعمال الأيام
             </h2>
 
-            <div class="flex flex-wrap justify-center gap-5 md:gap-6 text-center">
+            <!-- [تحسين] عنوان لمجموعة الأيام -->
+            <h3 class="text-xl font-semibold text-gray-700 text-center pt-2">الأعمال اليومية</h3>
+
+            <div class="flex flex-wrap justify-center gap-4 text-center">
 
                 <!-- كل يوم من أيام الأسبوع -->
                 <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الجمعة">
@@ -178,21 +187,24 @@
 
             </div>
             
-            <!-- === الأزرار المستطيلة === -->
-            <div class="w-full text-center pt-4 space-y-4">
-                <div class="group cursor-pointer p-4 bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md day-button" data-day="المناجاة الخمس عشرة">
+            <!-- [تحسين] فاصل + عنوان للأقسام العامة -->
+            <hr class="border-gray-300/70 my-6">
+            <h3 class="text-xl font-semibold text-gray-700 text-center mb-4">أقسام عامة</h3>
+            
+            <!-- [تحسين] شبكة للأزرار المستطيلة (تترتب تلقائياً) -->
+            <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                
+                <div class="group cursor-pointer p-4 h-full bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md hover:shadow-lg day-button" data-day="المناجاة الخمس عشرة">
                     <span class="text-lg font-semibold text-gray-800">المناجاة الخمس عشرة</span>
                 </div>
                 
-                <div class="group cursor-pointer p-4 bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md day-button" data-day="ادعية">
+                <div class="group cursor-pointer p-4 h-full bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md hover:shadow-lg day-button" data-day="ادعية">
                     <span class="text-lg font-semibold text-gray-800">ادعية</span>
                 </div>
 
-                <!-- === الزر الجديد "ادعية الجمعة" === -->
-                <div class="group cursor-pointer p-4 bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md day-button" data-day="ادعية الجمعة">
+                <div class="group cursor-pointer p-4 h-full bg-white/30 rounded-lg border border-white/40 transition-all duration-300 hover:bg-white/50 hover:scale-[1.03] shadow-md hover:shadow-lg day-button" data-day="ادعية الجمعة">
                     <span class="text-lg font-semibold text-gray-800">ادعية الجمعة</span>
                 </div>
-                <!-- ============================ -->
             </div>
             <!-- ======================= -->
 
@@ -200,11 +212,15 @@
     </div>
 
     <!-- حاوية الصفحة الكاملة (مخفية افتراضياً) -->
+    <!-- [تحسين] تم تكبير العرض الأقصى -->
     <div id="day-page-container" class="min-h-screen w-full flex items-center justify-center p-2 md:p-4 hidden">
-        <div class="w-full max-w-4xl p-4 md:p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
+        <div class="w-full max-w-5xl p-4 md:p-8 space-y-6 bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10">
             
-            <button id="back-button" class="mb-4 text-gray-800 bg-black/10 px-4 py-2 rounded-lg hover:bg-black/20 transition-all">&larr; رجوع</button>
-            <h2 id="page-title" class="text-3xl font-bold text-center text-gray-900"></h2>
+            <!-- [تحسين] تم تغيير تصميم زر الرجوع -->
+            <button id="back-button" class="mb-4 text-white bg-blue-600 px-5 py-2 rounded-lg hover:bg-blue-700 shadow-md hover:shadow-lg transition-all font-semibold">&larr; رجوع</button>
+            
+            <!-- [تحسين] تم إضافة خط فاصل أسفل العنوان -->
+            <h2 id="page-title" class="text-3xl font-bold text-center text-gray-900 border-b pb-4 border-gray-300/50"></h2>
             
             <div id="page-content" class="mt-6 text-right min-h-[200px] max-h-[70vh] overflow-y-auto p-2 md:p-4 rounded-lg">
                 <!-- المحتوى سيتم حقنه هنا بواسطة JS -->
@@ -247,7 +263,7 @@
                 "الجمعة": {
                     sections: [
                         { type: 'card', content: '✅ يوم صالح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '<ul class="list-disc list-inside space-y-2 pr-4"><li>يستحب فيه الغُسل قبل الزوال لصلاة الجمعة .</li><li>المقاربة الزجاجية اليوم بعد فضيلة صلاة العصر مستحبة والمولود الحاصل عالم مشهور في العالم ، وكراهيتها قبل صلاة الظهر .</li><li>من أراد الحجامة فليحتجم الجمعة عصراً</li><li>تقليم الأظافر الجمعة ورد عن النبي (صلى الله عليه وآله): (تقليم الأظافر يوم الجمعه يؤمن الجذام ، والجنون ، والبرص ، والعمى ، وإن لم تحتج فحكها) .وفي خبر آخر يدر الرزق وهو أهم يوم لتقليم الأظافر فمن قلم أظافره يوم الجمعة اخرج الله منه الداء وأدخله فيه الدواء.</li></ul>' },
+                        { type: 'card', content: '<ul class="list-disc list-inside space-y-2 pr-4"><li>يستحب فيه الغُسل قبل الزوال لصلاة الجمعة .</li><li>المقاربة الزوجية اليوم بعد فضيلة صلاة العصر مستحبة والمولود الحاصل عالم مشهور في العالم ، وكراهيتها قبل صلاة الظهر .</li><li>من أراد الحجامة فليحتجم الجمعة عصراً</li><li>تقليم الأظافر الجمعة ورد عن النبي (صلى الله عليه وآله): (تقليم الأظافر يوم الجمعه يؤمن الجذام ، والجنون ، والبرص ، والعمى ، وإن لم تحتج فحكها) .وفي خبر آخر يدر الرزق وهو أهم يوم لتقليم الأظافر فمن قلم أظافره يوم الجمعة اخرج الله منه الداء وأدخله فيه الدواء.</li></ul>' },
                         { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والضحى.' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'اللهم صل على محمد وآل محمد وعجل فرجهم وأهلك عدوهم ، ياالله يا هو', subtext: 'العدد ( ١٠٠ ) مرة.' },
                         { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة مولانا صاحب العصر والزمان روحي فداه .' },
@@ -372,7 +388,6 @@
                     ]
                 },
 
-                // --- [تمت الإضافة] ---
                 "ادعية الجمعة": {
                     sections: [
                         { type: 'card', content: '<strong>۞ ادعية الجمعة:</strong>' },
@@ -468,7 +483,8 @@
                     dayButtons.forEach(button => {
                         const dayName = button.getAttribute('data-day');
                         if (dayName === todayArabic) {
-                            const iconCircle = button.querySelector('div');
+                            // تمييز الأزرار الدائرية فقط
+                            const iconCircle = button.querySelector('div.rounded-full');
                             if (iconCircle) {
                                 iconCircle.classList.remove('bg-white/30', 'border-white/40', 'group-hover:bg-white/50');
                                 iconCircle.classList.add('bg-blue-600', 'border-blue-400', 'shadow-lg', 'scale-105');
@@ -521,19 +537,34 @@
                             html += `
                                 <details>
                                     <summary>${section.title}</summary>
-                                    <div class="details-content">${section.content}</div>
+                                    <div class="details-content pt-4">${section.content}</div>
                                 </details>`;
                             break;
 
                         case 'audio':
-                            html += `
-                                <div class="content-card">
-                                    <p class="text-lg font-semibold text-blue-800 mb-2">${section.title}</p>
-                                    <audio controls class="w-full rounded-lg shadow-sm bg-white/50 backdrop-blur-sm">
-                                        <source src="${section.url}" type="audio/mpeg">
-                                        متصفحك لا يدعم عنصر الصوت.
-                                    </audio>
-                                </div>`;
+                            // [التحسين] استخدام الأكورديون للصفحات الطويلة
+                            if (dayName === 'ادعية الجمعة' || dayName === 'المناجاة الخمس عشرة') {
+                                html += `
+                                    <details>
+                                        <summary>${section.title}</summary>
+                                        <div class="details-content pt-4">
+                                            <audio controls class="w-full rounded-lg shadow-sm bg-white/50 backdrop-blur-sm">
+                                                <source src="${section.url}" type="audio/mpeg">
+                                                متصفحك لا يدعم عنصر الصوت.
+                                            </audio>
+                                        </div>
+                                    </details>`;
+                            } else {
+                                // العرض العادي للبطاقة
+                                html += `
+                                    <div class="content-card">
+                                        <p class="text-lg font-semibold text-blue-800 mb-2">${section.title}</p>
+                                        <audio controls class="w-full rounded-lg shadow-sm bg-white/50 backdrop-blur-sm">
+                                            <source src="${section.url}" type="audio/mpeg">
+                                            متصفحك لا يدعم عنصر الصوت.
+                                        </audio>
+                                    </div>`;
+                            }
                             break;
                     }
                 });
