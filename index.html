@@ -3,213 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أعمال الأيام - واجهة ناعمة</title>
+    <title>أعمال الأيام - النسخة الشاملة</title>
     
-    <!-- === إضافات PWA (Progressive Web App) === -->
+    <!-- === إضافات PWA === -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://i.imgur.com/Ra9c5H4.png">
     <meta name="theme-color" content="#e0e5ec">
-    <!-- ========================================== -->
 
     <!-- تحميل Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- تحميل خط Cairo (أفضل للعربية) بدلاً من Inter -->
+    <!-- تحميل خط Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- تحميل أيقونات Google Material Symbols (Rounded) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
     
     <style>
-        /* ========================================================================= */
-        /* === قواعد Neumorphism الأساسية === */
-        /* ========================================================================= */
         :root {
             --primary-bg: #e0e5ec;
             --dark-shadow: #a3b1c6;
             --light-shadow: #ffffff;
-            --accent-color: #0984e3; /* الأزرق المميز */
-            --text-color: #33373d; /* الرمادي الداكن */
-
-            /* ظل العناصر البارزة (للبطاقات والأزرار) */
+            --accent-color: #0984e3;
+            --text-color: #33373d;
             --outset-shadow: 6px 6px 12px var(--dark-shadow), -6px -6px 12px var(--light-shadow);
-
-            /* ظل العناصر الغائرة (لحقول الإدخال أو عند الضغط) */
             --inset-shadow: inset 6px 6px 12px var(--dark-shadow), inset -6px -6px 12px var(--light-shadow);
         }
 
         body {
             font-family: 'Cairo', sans-serif;
-            background-color: var(--primary-bg); /* الخلفية الأساسية المطلوبة */
-            color: var(--text-color); /* لون الخط الأساسي */
-            /* إزالة أي خلفيات متدرجة/صور غير مطلوبة */
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            -webkit-tap-highlight-color: transparent;
         }
         
-        /* إعادة تعيين لجميع العناصر التفاعلية */
-        button, .neumo-outset, .neumo-inset, details, audio {
-            background-color: var(--primary-bg) !important; /* لون العناصر نفس لون الخلفية */
-            border: none !important; /* إزالة الحدود */
+        /* Reset elements */
+        button, .neumo-outset, .neumo-inset, details {
+            background-color: var(--primary-bg) !important;
+            border: none !important;
             outline: none;
             transition: all 0.2s ease-in-out;
         }
 
-        /* ستايل العناصر البارزة (الافتراضية) */
+        /* Neumorphism Styles */
         .neumo-outset {
             box-shadow: var(--outset-shadow);
-            border-radius: 15px; /* زوايا ناعمة */
+            border-radius: 20px;
         }
         
-        /* تأثير الغوص عند الضغط على عنصر بارز */
-        .neumo-outset:active, 
-        .neumo-outset-btn:active,
-        .day-button-active { /* حالة النشاط لزر اليوم الحالي */
-            box-shadow: var(--inset-shadow);
-            transform: scale(0.98);
-        }
-
-        /* ستايل العناصر الغائرة (لحقول الإدخال/النافذة المنبثقة للنسخ) */
         .neumo-inset {
             box-shadow: var(--inset-shadow);
             border-radius: 15px;
         }
 
-        /* ستايل للأزرار المستطيلة (التي تعمل كبطاقات للتنقل) */
+        /* Buttons */
         .neumo-outset-btn {
             box-shadow: var(--outset-shadow);
             border-radius: 15px;
             cursor: pointer;
-            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        /* تأثير التمرير الخفيف (رفع بسيط) */
-        .neumo-outset-btn:hover {
-            box-shadow: 3px 3px 6px var(--dark-shadow), -3px -3px 6px var(--light-shadow);
+        .neumo-outset-btn:active, .day-button:active .day-circle, .tasbih-btn:active {
+            box-shadow: var(--inset-shadow);
+            transform: scale(0.98);
         }
 
-        /* ستايل للأزرار الدائرية للأيام */
+        /* Day Circles */
         .day-circle {
             box-shadow: var(--outset-shadow);
             border-radius: 50%;
             transition: all 0.3s ease-in-out;
-        }
-        .day-circle:hover {
-            box-shadow: 3px 3px 6px var(--dark-shadow), -3px -3px 6px var(--light-shadow);
-            transform: scale(1.05);
+            background-color: var(--primary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .day-circle.highlighted {
-            /* حالة اليوم الحالي (غائرة مع لون مميز) */
             box-shadow: var(--inset-shadow);
             color: var(--accent-color);
             font-weight: bold;
-            transform: scale(1);
         }
 
-
-        /* ========================================================================= */
-        /* === تطبيقات الستايل على باقي العناصر === */
-        /* ========================================================================= */
-
-        /* ستايل للعنوان (تطبيق اللون المميز) */
+        /* Typography & Layout */
         .page-header {
             color: var(--accent-color);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .material-symbols-rounded {
+            vertical-align: middle;
         }
 
-        /* ستايل لزر النسخ */
-        .copy-btn {
-            cursor: pointer;
-            font-size: 1.2rem;
-            color: var(--accent-color);
-            opacity: 0.7;
-            padding: 0 0.5rem;
+        /* --- تصميم مشغل الصوت الجديد --- */
+        .custom-player-card {
+            background: var(--primary-bg);
+            border-radius: 20px;
+            box-shadow: var(--outset-shadow);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 0.5rem;
         }
-        .copy-btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
+
+        .play-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            box-shadow: var(--outset-shadow);
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .play-btn:active, .play-btn.playing {
+            box-shadow: var(--inset-shadow);
+            color: #e84118; /* لون أحمر عند التشغيل */
+        }
+
+        /* شريط التمرير المخصص */
+        input[type="range"].custom-seek {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: transparent;
+            cursor: pointer;
+        }
+        /* Track */
+        input[type="range"].custom-seek::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            background: #d1d9e6;
+            border-radius: 10px;
+            box-shadow: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+        }
+        /* Thumb */
+        input[type="range"].custom-seek::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            margin-top: -4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+
+        /* Prayer & Date Section Styles */
+        .prayer-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 15px;
+            box-shadow: var(--outset-shadow);
+        }
+        .prayer-card.active-prayer {
+            box-shadow: var(--inset-shadow);
+            color: var(--accent-color);
         }
         
-        /* ستايل للأقسام القابلة للطي (details/summary) */
+        /* Details/Summary */
         details {
             border-radius: 20px;
-            box-shadow: var(--outset-shadow); /* بارز افتراضياً */
+            box-shadow: var(--outset-shadow);
             margin-bottom: 1.5rem;
+            overflow: hidden;
         }
         details[open] {
-            box-shadow: var(--inset-shadow); /* يصبح غائراً عند الفتح */
+            box-shadow: var(--inset-shadow);
         }
         summary {
             padding: 1rem;
             font-weight: 700;
             cursor: pointer;
-            font-size: 1.1rem;
-            color: var(--text-color);
-            list-style: none;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+        summary::-webkit-details-marker { display: none; }
         summary::after {
             content: '◀';
             font-size: 0.8rem;
             color: var(--accent-color);
-            transition: transform 0.2s;
+            transition: transform 0.3s;
             margin-right: 0.5rem;
         }
-        details[open] summary::after {
-            transform: rotate(90deg);
-        }
-        .details-content {
-            padding: 0 1rem 1rem 1rem;
-            border-top: 1px solid var(--dark-shadow); /* فاصل خفيف */
-            line-height: 1.7;
-        }
+        details[open] summary::after { transform: rotate(-90deg); }
+        .details-content { padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); line-height: 1.8; }
         
-        /* ستايل للبطاقات (محتوى اليوم) */
-        .content-card {
-            box-shadow: var(--outset-shadow);
-            border-radius: 20px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            line-height: 1.7;
-        }
-
-        /* تخصيص ستايل شريط مشغل الصوت */
-        audio {
-            border-radius: 10px;
-            box-shadow: var(--inset-shadow); /* لتبدو غائرة */
-        }
-        audio::-webkit-media-controls-panel {
-            background-color: var(--primary-bg);
-            border-radius: 10px;
-        }
-        audio::-webkit-media-controls-play-button,
-        audio::-webkit-media-controls-timeline,
-        audio::-webkit-media-controls-volume-slider {
-            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
-        }
-
-        /* إخفاء النافذة المنبثقة افتراضياً */
-        #daily-modal-backdrop {
-            display: none;
-        }
+        /* Modal & Utilities */
+        #daily-modal-backdrop { display: none; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* ستايل لزر الرجوع */
-        #back-button {
-            border-radius: 10px;
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            /* تطبيق نمط Neumorphism بشكل صريح */
-            box-shadow: var(--outset-shadow);
-        }
-        /* للتفريق، نستخدم اللون المميز كلون للنص لزر الرجوع */
-        #back-button span {
-            color: var(--accent-color); 
-        }
-
-        /* ستايل Toast */
+        /* Copy Toast */
         #copy-toast {
             background-color: var(--primary-bg) !important;
             color: var(--accent-color);
             box-shadow: var(--outset-shadow);
             border-radius: 30px;
+            pointer-events: none;
+        }
+
+        /* أنماط المسبحة */
+        .tasbih-btn {
+            box-shadow: var(--outset-shadow);
+            border-radius: 50%;
+            transition: all 0.1s ease;
+        }
+        .tasbih-btn:active {
+            box-shadow: var(--inset-shadow);
+        }
+        
+        /* أنماط أزرار المسبحة الجديدة */
+        .zikr-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.2s;
+            height: 100%;
+        }
+        .zikr-option-btn:hover {
+            color: var(--accent-color);
+        }
+        .zikr-option-btn.active {
+            box-shadow: var(--inset-shadow);
+            color: var(--accent-color);
             font-weight: bold;
         }
 
@@ -217,156 +245,333 @@
 </head>
 <body class="antialiased">
 
-    <!-- === النافذة المنبثقة للملاحظة اليومية === -->
-    <div id="daily-modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-30">
-        <!-- تطبيق Neumorphism على محتوى المودال -->
-        <div id="daily-modal-content" class="w-full max-w-md p-6 neumo-outset rounded-2xl text-center space-y-4">
-            <h3 class="text-xl font-bold" style="color: var(--accent-color);">ملاحظة هامة</h3>
-            <p class="text-base font-medium leading-relaxed">
-                يبدأ اليوم الشرعي ( ليلاً ثم نهاراً). إذا كنت مضطراً لفعل أمرٍ منهي عنه او لم ينصح القيام بفعله فعليك التصدق أولاً مع الاستغغار وقراءة آية الكرسي باستمرار.
+    <!-- === مودال الملاحظة === -->
+    <div id="daily-modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/20 backdrop-blur-sm">
+        <div class="w-full max-w-md p-8 neumo-outset rounded-2xl text-center space-y-6">
+            <div class="flex justify-center text-amber-500">
+                <span class="material-symbols-rounded text-5xl">warning</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-700">ملاحظة هامة</h3>
+            <p class="text-base font-medium leading-relaxed text-gray-600">
+                يبدأ اليوم الشرعي (ليلاً ثم نهاراً). إذا كنت مضطراً لفعل أمرٍ منهي عنه، فعليك التصدق أولاً وقراءة آية الكرسي.
             </p>
-            <!-- تطبيق Neumorphism على زر الإغلاق -->
-            <button id="close-modal-btn" class="neumo-outset-btn w-full px-4 py-3 font-semibold text-white focus:outline-none focus:ring-opacity-50 transition-all" style="color: var(--accent-color);">
+            <button id="close-modal-btn" class="neumo-outset-btn w-full py-3 font-bold text-lg text-blue-600">
                 إغلاق
             </button>
         </div>
     </div>
-    <!-- ======================================== -->
 
+    <!-- === الحاوية الرئيسية === -->
+    <div id="main-container" class="min-h-screen w-full flex items-center justify-center p-4 py-6">
 
-    <!-- حاوية رئيسية لتوسيط الواجهة -->
-    <div id="main-container" class="min-h-screen w-full flex items-center justify-center p-4">
+        <div class="w-full max-w-lg space-y-8">
 
-        <!-- لوحة التحكم الرئيسية (neumo-outset) -->
-        <div class="w-full max-w-lg p-6 md:p-8 space-y-6 neumo-outset rounded-[22px]">
-            
-            <h2 class="text-3xl font-bold text-center page-header">
-                أعمال الأيام
-            </h2>
-
-            <h3 class="text-xl font-semibold text-center pt-2">الأعمال اليومية</h3>
-
-            <div class="flex flex-wrap justify-center gap-4 text-center">
-
-                <!-- كل يوم من أيام الأسبوع - تطبيق Neumorphism على الدائرة -->
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الجمعة">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الجمعة</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="السبت">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>السبت</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الأحد">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الأحد</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الاثنين">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الاثنين</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الثلاثاء">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الثلاثاء</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الأربعاء">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الأربعاء</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col items-center group cursor-pointer w-20 h-20 md:w-24 md:h-24 day-button" data-day="الخميس">
-                    <div class="w-full h-full day-circle flex items-center justify-center text-lg font-semibold">
-                        <span>الخميس</span>
-                    </div>
-                </div>
-
-            </div>
-            
-            <!-- فاصل -->
-            <hr class="border-gray-300/50 my-6">
-            <h3 class="text-xl font-semibold text-center mb-4">أقسام عامة</h3>
-            
-            <!-- شبكة للأزرار المستطيلة - تطبيق neumo-outset-btn -->
-            <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <!-- === قسم أوقات الصلاة والتاريخ (الجديد) === -->
+            <div class="neumo-outset p-6 rounded-[30px] space-y-6 text-center relative overflow-hidden">
                 
-                <div class="neumo-outset-btn h-full day-button" data-day="المناجاة الخمس عشرة">
-                    <span class="text-lg font-semibold">المناجاة الخمس عشرة</span>
+                <!-- رسالة الموقع (تظهر إذا لم يتم تحديد الموقع) -->
+                <div id="location-status" class="text-sm text-gray-500 mb-2 flex items-center justify-center gap-1">
+                    <span class="material-symbols-rounded text-base animate-pulse">location_searching</span>
+                    <span>جاري تحديد الموقع...</span>
                 </div>
+
+                <!-- التاريخ -->
+                <div class="space-y-1">
+                    <h2 id="hijri-date-display" class="text-xl font-bold text-gray-800">-- -- ---- هـ</h2>
+                    <p id="gregorian-date-display" class="text-sm text-gray-500">-- -- ---- م</p>
+                </div>
+
+                <!-- العد التنازلي -->
+                <div class="neumo-inset p-4 rounded-2xl mx-4">
+                    <p class="text-sm text-gray-500 mb-1">الوقت المتبقي لصلاة <span id="next-prayer-name" class="font-bold text-blue-600">--</span></p>
+                    <div id="countdown-timer" class="text-3xl md:text-4xl font-bold text-gray-700 font-[monospace]" dir="ltr">
+                        00:00:00
+                    </div>
+                </div>
+
+                <!-- بطاقات الصلوات الثلاث -->
+                <div class="grid grid-cols-3 gap-3 mt-4">
+                    
+                    <!-- الفجر -->
+                    <div id="card-Fajr" class="prayer-card">
+                        <span class="material-symbols-rounded text-amber-500 text-2xl mb-1">wb_twilight</span>
+                        <span class="text-xs font-bold text-gray-500 mb-1">الصبح</span>
+                        <span id="time-Fajr" class="text-sm font-bold text-gray-800" dir="ltr">--:--</span>
+                    </div>
+
+                    <!-- الظهر -->
+                    <div id="card-Dhuhr" class="prayer-card">
+                        <span class="material-symbols-rounded text-orange-500 text-2xl mb-1">light_mode</span>
+                        <span class="text-xs font-bold text-gray-500 mb-1">الظهر</span>
+                        <span id="time-Dhuhr" class="text-sm font-bold text-gray-800" dir="ltr">--:--</span>
+                    </div>
+
+                    <!-- المغرب -->
+                    <div id="card-Maghrib" class="prayer-card">
+                        <span class="material-symbols-rounded text-indigo-500 text-2xl mb-1">nights_stay</span>
+                        <span class="text-xs font-bold text-gray-500 mb-1">المغرب</span>
+                        <span id="time-Maghrib" class="text-sm font-bold text-gray-800" dir="ltr">--:--</span>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ======================================= -->
+
+
+            <!-- لوحة أعمال الأيام -->
+            <div class="neumo-outset p-6 md:p-8 space-y-6 rounded-[30px]">
                 
-                <div class="neumo-outset-btn h-full day-button" data-day="ادعية">
-                    <span class="text-lg font-semibold">ادعية</span>
-                </div>
+                <header class="text-center pb-2">
+                    <h2 class="text-2xl font-bold text-gray-700 flex items-center justify-center gap-2">
+                        <span class="material-symbols-rounded text-blue-500">event_note</span>
+                        أعمال الأيام
+                    </h2>
+                </header>
 
-                <div class="neumo-outset-btn h-full day-button" data-day="ادعية الجمعة">
-                    <span class="text-lg font-semibold">ادعية الجمعة</span>
-                </div>
+                <section>
+                    <div class="flex flex-wrap justify-center gap-4 text-center">
+                        <!-- أيام الأسبوع -->
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الجمعة">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الجمعة</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="السبت">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">السبت</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الأحد">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الأحد</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الاثنين">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الاثنين</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الثلاثاء">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الثلاثاء</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الأربعاء">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الأربعاء</div>
+                        </div>
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="الخميس">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-gray-600">الخميس</div>
+                        </div>
+                        <!-- المسبحة -->
+                        <div class="day-wrapper flex flex-col items-center gap-2 day-button cursor-pointer group" data-day="المسبحة">
+                            <div class="w-16 h-16 md:w-20 md:h-20 day-circle text-sm font-bold text-blue-600">المسبحة</div>
+                        </div>
+                    </div>
+                </section>
+                
+                <div class="h-px bg-gray-300/50 my-4"></div>
+                
+                <section>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div class="neumo-outset-btn day-button h-14 text-gray-700 font-bold text-sm gap-2" data-day="المناجاة الخمس عشرة">
+                            <span class="material-symbols-rounded text-blue-500">volunteer_activism</span>
+                            المناجاة الـ 15
+                        </div>
+                        <div class="neumo-outset-btn day-button h-14 text-gray-700 font-bold text-sm gap-2" data-day="ادعية">
+                            <span class="material-symbols-rounded text-green-500">auto_stories</span>
+                            أدعية مختارة
+                        </div>
+                        <div class="neumo-outset-btn day-button h-14 text-gray-700 font-bold text-sm gap-2" data-day="ادعية الجمعة">
+                            <span class="material-symbols-rounded text-purple-500">mosque</span>
+                            أدعية الجمعة
+                        </div>
+                    </div>
+                </section>
+
             </div>
-            <!-- ======================= -->
-
-        </div> <!-- نهاية اللوح النيومورفي -->
-    </div>
-
-    <!-- حاوية الصفحة الكاملة (مخفية افتراضياً) -->
-    <div id="day-page-container" class="min-h-screen w-full flex items-center justify-center p-2 md:p-4 hidden">
-        
-        <!-- لوحة المحتوى (neumo-outset) -->
-        <div class="w-full max-w-5xl p-4 md:p-8 space-y-6 neumo-outset rounded-[22px]">
             
-            <!-- زر الرجوع -->
-            <button id="back-button" class="transition-all" style="color: var(--text-color);">
-                &larr; <span class="font-semibold" style="color: var(--accent-color);">رجوع</span>
-            </button>
-            
-            <h2 id="page-title" class="text-3xl font-bold text-center page-header pb-4"></h2>
-            
-            <div id="page-content" class="mt-6 text-right min-h-[200px] max-h-[70vh] overflow-y-auto p-2 md:p-4 neumo-inset rounded-2xl">
-                <!-- المحتوى سيتم حقنه هنا بواسطة JS -->
-            </div>
+            <footer class="text-center text-xs text-gray-400 pb-4">
+                By sauron
+            </footer>
         </div>
     </div>
 
-    <!-- عنصر مؤقت لعملية النسخ (مخفي) -->
-    <textarea id="copy-helper" class="absolute -top-full"></textarea>
-    
-    <!-- رسالة تأكيد النسخ (مخفية) -->
-    <div id="copy-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-6 py-3 opacity-0 transform translate-y-5">
-        تم النسخ إلى الحافظة!
+    <!-- === صفحة التفاصيل (مخفية) === -->
+    <div id="day-page-container" class="min-h-screen w-full flex items-start justify-center p-4 hidden opacity-0 transition-opacity duration-300 py-8">
+        <div class="w-full max-w-4xl p-6 md:p-8 space-y-6 neumo-outset rounded-[30px]">
+            <div class="flex items-center justify-between">
+                <button id="back-button" class="neumo-outset-btn px-6 py-2 text-gray-600 font-bold gap-2">
+                    <span class="material-symbols-rounded">arrow_forward</span>
+                    رجوع
+                </button>
+            </div>
+            <h2 id="page-title" class="text-2xl font-bold text-center text-blue-600 pb-2 border-b border-gray-200"></h2>
+            <div id="page-content" class="space-y-4 pt-2"></div>
+        </div>
     </div>
+
+    <!-- أدوات النسخ -->
+    <textarea id="copy-helper" class="absolute -top-full opacity-0 pointer-events-none"></textarea>
+    <div id="copy-toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 px-6 py-3 transition-all duration-300 opacity-0 transform translate-y-5 flex items-center gap-2">
+        <span class="material-symbols-rounded">content_copy</span>
+        <span>تم النسخ!</span>
+    </div>
+
+    <!-- صوت النقر للمسبحة -->
+    <audio id="tasbih-click-sound" src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAHAAACnwABBwsMDxATFhgbHR8iJSksLzIzNjk8QEJGSEtOUFFVWVxdYWJkZmhqbW9xdHZ5fH6Ag4aJi46QkpWYmZqcn6CkpqqrrrC0trm8v8HDxsnLztHT1tjb3d/h5Obp7O7w8vX3+fv9//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA//uQZAAPAAADSAAAAABAAAAAAAAAAAAAgAAAAAAAAAAAAAAABAAA"></audio>
 
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- 1. تسجيل Service Worker (بدون تغيير) ---
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('sw.js')
-                        .then(registration => {
-                            console.log('Service Worker registered successfully:', registration);
-                        })
-                        .catch(error => {
-                            console.log('Service Worker registration failed:', error);
-                        });
-                });
+            // --- 1. تهيئة المتغيرات ---
+            const locationStatus = document.getElementById('location-status');
+            const hijriDateDisplay = document.getElementById('hijri-date-display');
+            const gregorianDateDisplay = document.getElementById('gregorian-date-display');
+            const countdownTimer = document.getElementById('countdown-timer');
+            const nextPrayerName = document.getElementById('next-prayer-name');
+            
+            const prayerTimesEls = {
+                Fajr: document.getElementById('time-Fajr'),
+                Dhuhr: document.getElementById('time-Dhuhr'),
+                Maghrib: document.getElementById('time-Maghrib')
+            };
+            const prayerCards = {
+                Fajr: document.getElementById('card-Fajr'),
+                Dhuhr: document.getElementById('card-Dhuhr'),
+                Maghrib: document.getElementById('card-Maghrib')
+            };
+
+            let prayerTimesData = null; // لتخزين البيانات المجلوبة
+
+            // --- 2. جلب الموقع وأوقات الصلاة ---
+            function initPrayerTimes() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(fetchData, handleError);
+                } else {
+                    locationStatus.textContent = "المتصفح لا يدعم تحديد الموقع.";
+                }
             }
 
-            // --- 2. البيانات (بدون تغيير) ---
+            function handleError(error) {
+                let msg = "تعذر تحديد الموقع.";
+                if (error.code === 1) msg = "يرجى السماح بتحديد الموقع لعرض أوقات الصلاة.";
+                locationStatus.textContent = msg;
+                locationStatus.classList.add('text-red-500');
+            }
+
+            function fetchData(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const timestamp = Math.floor(Date.now() / 1000);
+                
+                locationStatus.innerHTML = `<span class="material-symbols-rounded text-green-600 text-sm">my_location</span> تم تحديد الموقع`;
+
+                // استخدام API Aladhan
+                const apiUrl = `https://api.aladhan.com/v1/timings/${timestamp}?latitude=${lat}&longitude=${lng}&method=auto`;
+
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.code === 200) {
+                            updateDashboard(data.data);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error fetching prayer times:", err);
+                        locationStatus.textContent = "خطأ في جلب البيانات.";
+                    });
+            }
+
+            function updateDashboard(data) {
+                const timings = data.timings;
+                const hijri = data.date.hijri;
+                const gregorian = data.date.gregorian;
+
+                // 1. تحديث التاريخ
+                hijriDateDisplay.textContent = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
+                gregorianDateDisplay.textContent = `${gregorian.weekday.en}, ${gregorian.date}`;
+
+                // 2. تحديث أوقات الصلوات الثلاث (تنسيق 12 ساعة)
+                prayerTimesData = {
+                    Fajr: timings.Fajr,
+                    Dhuhr: timings.Dhuhr,
+                    Maghrib: timings.Maghrib
+                };
+
+                for (let [key, timeStr] of Object.entries(prayerTimesData)) {
+                    // timeStr comes as HH:MM (24h)
+                    prayerTimesEls[key].textContent = convertTo12Hour(timeStr);
+                }
+
+                // 3. بدء العد التنازلي
+                startCountdown(timings);
+            }
+
+            function convertTo12Hour(time24) {
+                let [hours, minutes] = time24.split(':');
+                hours = parseInt(hours);
+                const suffix = hours >= 12 ? 'م' : 'ص';
+                hours = hours % 12 || 12;
+                return `${hours}:${minutes} ${suffix}`;
+            }
+
+            function startCountdown(timings) {
+                const prayersOrder = [
+                    { key: 'Fajr', name: 'الصبح' },
+                    { key: 'Dhuhr', name: 'الظهر' },
+                    { key: 'Maghrib', name: 'المغرب' }
+                ];
+
+                setInterval(() => {
+                    const now = new Date();
+                    let nextPrayer = null;
+                    let minDiff = Infinity;
+
+                    // البحث عن الصلاة القادمة اليوم
+                    for (let p of prayersOrder) {
+                        const pTime = new Date();
+                        const [h, m] = timings[p.key].split(':');
+                        pTime.setHours(h, m, 0, 0);
+
+                        if (pTime > now) {
+                            const diff = pTime - now;
+                            if (diff < minDiff) {
+                                minDiff = diff;
+                                nextPrayer = { ...p, time: pTime };
+                            }
+                        }
+                    }
+
+                    // إذا لم نجد صلاة اليوم (أي نحن بعد المغرب)، فالصلاة القادمة هي الفجر غداً
+                    if (!nextPrayer) {
+                        const pTime = new Date();
+                        pTime.setDate(pTime.getDate() + 1);
+                        const [h, m] = timings['Fajr'].split(':');
+                        pTime.setHours(h, m, 0, 0);
+                        nextPrayer = { key: 'Fajr', name: 'الصبح', time: pTime };
+                        minDiff = pTime - now;
+                    }
+
+                    // تحديث الواجهة
+                    nextPrayerName.textContent = nextPrayer.name;
+                    
+                    // تمييز البطاقة النشطة
+                    document.querySelectorAll('.prayer-card').forEach(c => c.classList.remove('active-prayer'));
+                    if (prayerCards[nextPrayer.key]) {
+                        prayerCards[nextPrayer.key].classList.add('active-prayer');
+                    }
+
+                    // تنسيق الوقت المتبقي
+                    const hours = Math.floor((minDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((minDiff % (1000 * 60)) / 1000);
+
+                    countdownTimer.textContent = 
+                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                }, 1000);
+            }
+
+            // بدء التطبيق
+            initPrayerTimes();
+
+            // --- (بيانات الأيام) ---
             const daysData = {
                 "الجمعة": {
                     sections: [
                         { type: 'card', content: '✅ يوم صالح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '<ul class="list-disc list-inside space-y-2 pr-4"><li>يستحب فيه الغُسل قبل الزوال لصلاة الجمعة .</li><li>المقاربة الزوجية اليوم بعد فضيلة صلاة العصر مستحبة والمولود الحاصل عالم مشهور في العالم ، وكراهيتها قبل صلاة الظهر .</li><li>من أراد الحجامة فليحتجم الجمعة عصراً</li><li>تقليم الأظافر الجمعة ورد عن النبي (صلى الله عليه وآله): (تقليم الأظافر يوم الجمعه يؤمن الجذام ، والجنون ، والبرص ، والعمى ، وإن لم تحتج فحكها) .وفي خبر آخر يدر الرزق وهو أهم يوم لتقليم الأظافر فمن قلم أظافره يوم الجمعة اخرج الله منه الداء وأدخله فيه الدواء.</li></ul>' },
+                        { type: 'card', content: '<ul class="list-disc list-inside space-y-2 pr-2 marker:text-blue-500"><li>يستحب فيه الغُسل قبل الزوال لصلاة الجمعة .</li><li>المقاربة الزوجية اليوم بعد فضيلة صلاة العصر مستحبة والمولود الحاصل عالم مشهور في العالم ، وكراهيتها قبل صلاة الظهر .</li><li>من أراد الحجامة فليحتجم الجمعة عصراً</li><li>تقليم الأظافر الجمعة ورد عن النبي (صلى الله عليه وآله): (تقليم الأظافر يوم الجمعه يؤمن الجذام ، والجنون ، والبرص ، والعمى ، وإن لم تحتج فحكها) .وفي خبر آخر يدر الرزق وهو أهم يوم لتقليم الأظافر فمن قلم أظافره يوم الجمعة اخرج الله منه الداء وأدخله فيه الدواء.</li></ul>' },
                         { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والضحى.' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'اللهم صل على محمد وآل محمد وعجل فرجهم وأهلك عدوهم ، ياالله يا هو', subtext: 'العدد ( ١٠٠ ) مرة.' },
                         { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة مولانا صاحب العصر والزمان روحي فداه .' },
@@ -376,11 +581,11 @@
                 },
                 "السبت": {
                     sections: [
-                        { type: 'card', content: '❎ المقاربة الزوجية ( ليلة الأحد ) غير جيدة والمولود فيه يكون مشؤوما ثقيلاً.', style: 'text-red-700 font-semibold' },
+                        { type: 'card', content: '❎ المقاربة الزوجية ( ليلة الأحد ) غير جيدة والمولود فيه يكون مشؤوما ثقيلاً.', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '✅ يصح فيه ( الحجامة والفصد) .', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '❎ يكره تقليم الاظافر يوم السبت (من قلم أظافره يوم السبت وقعت الآكلة في أصابعه)', style: 'text-red-700 font-semibold' },
-                        { type: 'card', content: '❎ لا يصلح فيه شراء أو خياطة أو أقتناء الثياب والملابس.', style: 'text-red-700 font-semibold' },
-                        { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة إلى الضحى والعصر و رديئة ،عند الزوال والعشاء .' },
+                        { type: 'card', content: '❎ يكره تقليم الاظافر يوم السبت (من قلم أظافره يوم السبت وقعت الآكلة في أصابعه)', style: 'text-red-600 font-semibold' },
+                        { type: 'card', content: '❎ لا يصلح فيه شراء أو خياطة أو أقتناء الثياب والملابس.', style: 'text-red-600 font-semibold' },
+                        { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة إلى الضحى والعصر و رديئة ،عند العصر والضحى .' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يارب العالمين يا رحمن يا رحيم', subtext: '( ١٠٠ )مرة.' },
                         { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> المحبين + الشاكين + المطيعين لله' },
                         { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة النبي الاكرم صلى الله عليه وآله وسلم .' },
@@ -392,13 +597,13 @@
                     sections: [
                         { type: 'card', content: '✅ المقاربة الزوجية جيدة والمولود الحاصل حافظا لکتاب الله.', style: 'text-green-700 font-semibold' },
                         { type: 'card', content: '✅ استحباب الحجامة . بعد الزوال .', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '❎ تقليم الأظافر غير جيد ، ويذهب البركه ، لما روي (من قلم أظافره يوم الأحد ذهبت البركه من يده) .', style: 'text-red-700 font-semibold' },
-                        { type: 'card', content: '❎ لا يصلح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-red-700 font-semibold' },
+                        { type: 'card', content: '❎ تقليم الأظافر غير جيد ، ويذهب البركه ، لما روي (من قلم أظافره يوم الأحد ذهبت البركه من يده) .', style: 'text-red-600 font-semibold' },
+                        { type: 'card', content: '❎ لا يصلح لشراء واقتناء وخياطة الثياب والملابس.', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند طلوع الشمس وعند العشاء و رديئة ،عند العصر والضحى' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا ذا الجلال والاكرام يا واحد يا أحد', subtext: '( ١٠٠ )مرة.' },
                         { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الخائفين + المتوسلين' },
                         { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة أَميرِ المُؤمِنين والسيدة الزَّهراءِ سَلامُ الله عَليهما' },
-                        { type: 'details', title: '۞ صلاة اليوم:', content: 'من صلى يوم الأحد أربع ركعات يقرء في كل ركعة بفاتحة الكتاب وآمن الرسول👇 مرة، كتب الله بعدد كل نصراني ونصرانية حسنات، وأعطاه الله تعالى ثواب الف nabi، وكتب له ألف حجة وعمرة وكتب له بكل ركعة ألف صلاة، وأعطاه الله في الجنة بكل حرف مدينة من مسك .' },
+                        { type: 'details', title: '۞ صلاة اليوم:', content: 'من صلى يوم الأحد أربع ركعات يقرء في كل ركعة بفاتحة الكتاب وآمن الرسول👇 مرة، كتب الله بعدد كل نصراني ونصرانية حسنات، وأعطاه الله تعالى ثواب الف نبي، وكتب له ألف حجة وعمرة وكتب له بكل ركعة ألف صلاة، وأعطاه الله في الجنة بكل حرف مدينة من مسك .' },
                         { type: 'copyable', title: '📿 ذكر يوم الأحد:', text: 'يا فتاح', subtext: 'العدد (٤٨٩) مرة' }
                     ]
                 },
@@ -420,8 +625,8 @@
                     sections: [
                         { type: 'card', content: '✅ يوم صالح للحجامة والفصد.', style: 'text-green-700 font-semibold' },
                         { type: 'card', content: '✅ يوم صالح للمقاربة الزوجية .', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '❎ التقليم غير جيد ، يخاف الهلاك ، للمروي عن النبي( صلى الله عليه وآله): (من قلم أظافره يوم الثلاثاء يخاف الهلاك عليه).', style: 'text-red-700 font-semibold' },
-                        { type: 'card', content: '❎ لا يصلح لشراء وخياطة واقتناء الثياب والملابس .', style: 'text-red-700 font-semibold' },
+                        { type: 'card', content: '❎ التقليم غير جيد ، يخاف الهلاك ، للمروي عن النبي( صلى الله عليه وآله): (من قلم أظافره يوم الثلاثاء يخاف الهلاك عليه).', style: 'text-red-600 font-semibold' },
+                        { type: 'card', content: '❎ لا يصلح لشراء وخياطة واقتناء الثياب والملابس .', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند الظهر والعشاء و رديئة عند الضحى والعصر' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا أرحم الراحمين يا حي يا قيوم', subtext: 'العدد ( ١٠٠ ) مرة.' },
                         { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الراغبين + العارفين .' },
@@ -432,10 +637,10 @@
                 },
                 "الأربعاء": {
                     sections: [
-                        { type: 'card', content: '❎ توقّوا الحجامة والنورة يوم الاربعاء . ليلاً', style: 'text-red-700 font-semibold' },
+                        { type: 'card', content: '❎ توقّوا الحجامة والنورة يوم الاربعاء . ليلاً', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '✅ المقاربة الزوجية جيدة و المولود الحاصل عالم من العلماء أو حاكم من الحكام .', style: 'text-green-700 font-semibold' },
                         { type: 'card', content: '✅ خياطة أو أقتناء أو شراء الثياب والملابس فيها منفعة.', style: 'text-green-700 font-semibold' },
-                        { type: 'card', content: '❎ تقليم الأظافر يوم الاربعاء غير جيد ويورث سوء الخلق ، كما جاء في بعض الأخبار عن أئمة أهل البيت عليهم السلام: (من قلم أظافره يوم الأربعاء يصير سيء الخلق) .', style: 'text-red-700 font-semibold' },
+                        { type: 'card', content: '❎ تقليم الأظافر يوم الاربعاء غير جيد ويورث سوء الخلق ، كما جاء في بعض الأخبار عن أئمة أهل البيت عليهم السلام: (من قلم أظافره يوم الأربعاء يصير سيء الخلق) .', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة عند الزوال و رديئة ،عند العصر.' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يا حي القيوم يا حنان يا منان', subtext: 'العدد ( ١٠٠ ) مرة.' },
                         { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> الذاكرين + الشاكرين' },
@@ -458,10 +663,15 @@
                         { type: 'copyable', title: '📿 ذكر اليوم:', text: 'يا رزاق', subtext: '٣٠٨ مرة' }
                     ]
                 },
+                "المسبحة": {
+                    sections: [
+                        { type: 'tasbih_tool' }
+                    ]
+                },
                 
                 "المناجاة الخمس عشرة": {
                     sections: [
-                        { type: 'card', content: '<strong style="color: var(--accent-color);">۞ المناجاة الخمس عشرة:</strong>' },
+                        { type: 'card', content: '<strong class="text-blue-600 text-lg">۞ المناجاة الخمس عشرة:</strong>' },
                         { type: 'audio', title: 'مناجاة التائبين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/ooo13w88n93y.mp3' },
                         { type: 'audio', title: 'مناجاة الشاكين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/xsc2pjijopwh.mp3' },
                         { type: 'audio', title: 'مناجاة الخائفين', url: 'https://shiavoice.com/media/edaie/munajat_imam_sejad/mu7amed_el7ujerat/wxd55umyeb0j.mp3' },
@@ -482,7 +692,7 @@
 
                 "ادعية": {
                     sections: [
-                        { type: 'card', content: '<strong style="color: var(--accent-color);">۞ ادعية مختارة:</strong>' },
+                        { type: 'card', content: '<strong class="text-blue-600 text-lg">۞ ادعية مختارة:</strong>' },
                         { type: 'audio', title: 'دعاء الافتتاح', url: 'https://shiavoice.com/media/edaie/asdarat/mohammed_elhujerat/rewa3_ed3ie/miy1dpzafhkv.mp3' },
                         { type: 'audio', title: 'دعاء العهد', url: 'https://shiavoice.com/media/edaie/asdarat/mohammed_elhujerat/rewa3_ed3ie/fhbi9i9shpgd.mp3' },
                         { type: 'audio', title: 'دعاء الندبة', url: 'https://shiavoice.com/media/edaie/du3a_nudbe/yhd6n5mgs3nu.mp3' },
@@ -493,7 +703,7 @@
 
                 "ادعية الجمعة": {
                     sections: [
-                        { type: 'card', content: '<strong style="color: var(--accent-color);">۞ ادعية الجمعة:</strong>' },
+                        { type: 'card', content: '<strong class="text-blue-600 text-lg">۞ ادعية الجمعة:</strong>' },
                         { type: 'audio', title: 'دعاء الجمعة الأولى', url: 'https://alsaydalsadr.app/wp-content/uploads/2024/11/adeyhmp3-1.mp3' },
                         { type: 'audio', title: 'دعاء الجمعة الثانية', url: 'https://alsaydalsadr.app/wp-content/uploads/2024/11/adeyhmp3-2.mp3' },
                         { type: 'audio', title: 'دعاء الجمعة الثالثة', url: 'https://alsaydalsadr.app/wp-content/uploads/2024/11/adeyhmp3-3.mp3' },
@@ -541,10 +751,9 @@
                         { type: 'audio', title: 'دعاء الجمعة الخامسة والأربعون', url: 'https://alsaydalsadr.app/wp-content/uploads/2024/11/adeyhmp3-45.mp3' }
                     ]
                 }
-                // --- نهاية الإضافة ---
             };
 
-            // --- 3. جلب عناصر الـ DOM (بدون تغيير) ---
+            // تهيئة الصفحة
             const modalBackdrop = document.getElementById('daily-modal-backdrop');
             const closeModalBtn = document.getElementById('close-modal-btn');
             const dayButtons = document.querySelectorAll('.day-button');
@@ -555,186 +764,510 @@
             const pageContent = document.getElementById('page-content');
             const copyToast = document.getElementById('copy-toast');
             const copyHelper = document.getElementById('copy-helper');
+            const clickSound = document.getElementById('tasbih-click-sound');
 
-            // --- 4. منطق النافذة المنبثقة اليومية (بدون تغيير في المنطق، تغيير في الفئات) ---
+            // إظهار المودال مرة في اليوم
             (function showDailyModal() {
                 const today = new Date().toDateString();
                 const lastShownDate = localStorage.getItem('lastModalShownDate');
-
                 if (lastShownDate !== today) {
                     modalBackdrop.style.display = 'flex';
                     localStorage.setItem('lastModalShownDate', today);
                 }
-
-                closeModalBtn.addEventListener('click', () => {
-                    modalBackdrop.style.display = 'none';
-                });
+                closeModalBtn.addEventListener('click', () => modalBackdrop.style.display = 'none');
                 modalBackdrop.addEventListener('click', (e) => {
-                    if (e.target === modalBackdrop) {
-                        modalBackdrop.style.display = 'none';
-                    }
+                    if (e.target === modalBackdrop) modalBackdrop.style.display = 'none';
                 });
             })();
 
-            // --- 5. [التحديث] منطق تمييز اليوم الحالي ليتوافق مع Neumorphism ---
+            // تمييز اليوم
             (function highlightToday() {
                 const dayMap = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
                 try {
                     const todayIndex = new Date().getDay();
                     const todayArabic = dayMap[todayIndex];
-
                     dayButtons.forEach(button => {
-                        const dayName = button.getAttribute('data-day');
-                        if (dayName === todayArabic) {
-                            // تمييز الأزرار الدائرية فقط
-                            const iconCircle = button.querySelector('.day-circle');
-                            if (iconCircle) {
-                                // تطبيق نمط الغوص (Inset) واللون المميز
-                                iconCircle.classList.add('highlighted');
-                            }
+                        if (button.getAttribute('data-day') === todayArabic) {
+                            button.querySelector('.day-circle')?.classList.add('highlighted');
                         }
                     });
-                } catch (error) {
-                    console.error("خطأ في تمييز اليوم الحالي:", error);
-                }
+                } catch (e) {}
             })();
 
-            // --- 6. دالة بناء محتوى الصفحة (بدون تغيير في المنطق، تغيير في الفئات) ---
+            // بناء الصفحة
             function renderDayPage(dayName) {
                 const data = daysData[dayName];
                 if (!data) {
-                    pageContent.innerHTML = '<p class="text-center">لا يوجد محتوى لهذا اليوم حالياً.</p>';
+                    pageContent.innerHTML = '<p class="text-center text-gray-500">لا يوجد محتوى.</p>';
                     return;
                 }
 
                 let html = '';
                 data.sections.forEach(section => {
-                    const style = section.style || 'text-gray-800'; // ستايل افتراضي
-                    
+                    const style = section.style || 'text-gray-700';
                     switch (section.type) {
                         case 'card':
-                            html += `<div class="content-card ${style}">${section.content}</div>`;
+                            html += `<div class="content-card bg-gray-100/50 p-4 rounded-xl border border-gray-200 ${style} shadow-sm">${section.content}</div>`;
                             break;
-                        
                         case 'copyable':
-                            // نستخدم data-text لتخزين النص المراد نسخه
                             html += `
-                                <div class="content-card">
-                                    <div class="flex justify-between items-center">
-                                        <h4 class="text-lg font-semibold" style="color: var(--accent-color);">${section.title}</h4>
-                                        <span class="copy-btn" data-text="${section.text}" title="نسخ">📋</span>
+                                <div class="content-card bg-white p-5 rounded-xl border border-gray-100 shadow-sm group relative">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="text-lg font-bold text-blue-600 flex items-center gap-2">
+                                            <span class="material-symbols-rounded">stars</span>
+                                            ${section.title}
+                                        </h4>
+                                        <button class="copy-btn p-2 rounded-full hover:bg-blue-50 text-blue-500 transition-colors" data-text="${section.text}">
+                                            <span class="material-symbols-rounded">content_copy</span>
+                                        </button>
                                     </div>
-                                    <p class="italic pr-4 mt-2" dir="ltr">${section.text}</p>
-                                    <p class="text-sm pr-4 mt-1">${section.subtext}</p>
+                                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mb-2">
+                                        <p class="text-lg leading-loose font-medium text-gray-800" dir="rtl">${section.text}</p>
+                                    </div>
+                                    <p class="text-xs text-gray-400">${section.subtext}</p>
                                 </div>`;
                             break;
-
                         case 'details':
                             html += `
                                 <details>
                                     <summary>${section.title}</summary>
-                                    <div class="details-content pt-4">${section.content}</div>
+                                    <div class="details-content">${section.content}</div>
                                 </details>`;
                             break;
+                        case 'tasbih_tool':
+                            // --- منطق استخراج ذكر وتسبيح اليوم ---
+                            const dayMap = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+                            const todayIdx = new Date().getDay();
+                            const todayName = dayMap[todayIdx];
+                            const todayData = daysData[todayName];
+                            
+                            let dailyDhikr = { text: 'لا يوجد', count: '' };
+                            let dailyTasbih = { text: 'لا يوجد', count: '' };
 
+                            if(todayData) {
+                                todayData.sections.forEach(s => {
+                                    if(s.title && s.title.includes('ذكر') && !s.title.includes('تسبيح')) {
+                                        dailyDhikr = { text: s.text, count: s.subtext || '' };
+                                    }
+                                    if(s.title && s.title.includes('تسبيح')) {
+                                        dailyTasbih = { text: s.text, count: s.subtext || '' };
+                                    }
+                                });
+                            }
+
+                             html += `
+                                <div class="flex flex-col items-center justify-center space-y-8 py-8 animate-fade-in">
+                                    
+                                     <!-- Zikr Selector -->
+                                     <div class="w-full max-w-md grid grid-cols-2 gap-3 text-sm font-bold mb-4">
+                                         <!-- زر تسبيح الزهراء الكبير -->
+                                         <div class="col-span-2 neumo-outset zikr-option-btn cursor-pointer bg-blue-50/50" onclick="setZikrMode('zahra')">
+                                            <span class="text-blue-600 text-lg mb-1">تسبيح الزهراء (ع)</span>
+                                            <span class="text-xs text-gray-400 font-normal">34 الله أكبر - 33 الحمد لله - 33 سبحان الله</span>
+                                         </div>
+
+                                         <!-- أزرار اليوم -->
+                                         <div class="neumo-outset zikr-option-btn cursor-pointer" onclick="setZikrMode('normal', '${dailyDhikr.text}', '${dailyDhikr.count}')">
+                                            <span class="text-gray-600 mb-1">📿 ذكر اليوم</span>
+                                            <span class="text-xs text-gray-400 font-normal truncate w-full" dir="rtl">${dailyDhikr.text}</span>
+                                         </div>
+                                         <div class="neumo-outset zikr-option-btn cursor-pointer" onclick="setZikrMode('normal', '${dailyTasbih.text}', '${dailyTasbih.count}')">
+                                            <span class="text-gray-600 mb-1">۞ تسبيح اليوم</span>
+                                            <span class="text-xs text-gray-400 font-normal truncate w-full" dir="rtl">${dailyTasbih.text}</span>
+                                         </div>
+                                     </div>
+
+                                    <!-- Screen -->
+                                    <div class="neumo-inset w-64 h-40 rounded-3xl flex flex-col items-center justify-center mb-4 relative overflow-hidden border-2 border-gray-100 px-4 text-center">
+                                        <span id="zikr-text" class="text-gray-500 text-sm font-bold absolute top-4 w-full px-2">اختر ذكراً للبدء</span>
+                                        <div class="flex items-baseline justify-center gap-2 mt-4 w-full">
+                                            <span id="tasbih-count" class="text-7xl font-bold text-gray-700 font-[monospace] tracking-wider">0</span>
+                                            <!-- Remaining Count Badge -->
+                                            <span id="tasbih-remaining" class="text-lg text-gray-400 font-bold hidden bg-gray-100 px-2 py-1 rounded-lg shadow-inner"></span>
+                                        </div>
+                                        <!-- مؤشر لمراحل تسبيح الزهراء -->
+                                        <div id="zahra-indicator" class="hidden flex gap-2 mt-2">
+                                            <span id="ind-0" class="w-2 h-2 rounded-full bg-gray-300"></span>
+                                            <span id="ind-1" class="w-2 h-2 rounded-full bg-gray-300"></span>
+                                            <span id="ind-2" class="w-2 h-2 rounded-full bg-gray-300"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Buttons Container -->
+                                    <div class="flex items-center gap-12">
+                                        <!-- Reset -->
+                                        <button onclick="resetTasbih()" class="neumo-outset-btn w-16 h-16 rounded-full text-red-400 hover:text-red-600 transition-colors" title="تصفير">
+                                            <span class="material-symbols-rounded text-2xl">refresh</span>
+                                        </button>
+
+                                        <!-- Count (Big) -->
+                                        <button id="tasbih-btn" onclick="incrementTasbih()" class="tasbih-btn neumo-outset w-36 h-36 rounded-full flex items-center justify-center text-blue-500 active:scale-95 transition-transform duration-100 bg-gray-100">
+                                            <div class="neumo-outset w-28 h-28 rounded-full flex items-center justify-center bg-[#e0e5ec]">
+                                                <span class="material-symbols-rounded text-6xl text-blue-500">touch_app</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            break;
                         case 'audio':
-                            // استخدام الأكورديون لصفحات المناجاة والأدعية
-                            if (dayName === 'ادعية الجمعة' || dayName === 'المناجاة الخمس عشرة') {
+                            // إنشاء معرف فريد لكل مشغل
+                            const uniqueId = 'audio-' + Math.random().toString(36).substr(2, 9);
+                            const playerHtml = `
+                                <div class="custom-player-card" id="player-card-${uniqueId}">
+                                    <audio id="${uniqueId}" src="${section.url}" preload="none"></audio>
+                                    <button class="play-btn" onclick="toggleAudio('${uniqueId}')">
+                                        <span class="material-symbols-rounded text-2xl" id="icon-${uniqueId}">play_arrow</span>
+                                    </button>
+                                    <div class="w-full flex flex-col justify-center">
+                                        <input type="range" class="custom-seek" id="seek-${uniqueId}" value="0" max="100" oninput="seekAudio('${uniqueId}', this.value)">
+                                        <div class="flex justify-between text-[10px] text-gray-500 mt-1 px-1 font-bold">
+                                            <span id="curr-${uniqueId}">00:00</span>
+                                            <span id="dur-${uniqueId}">00:00</span>
+                                        </div>
+                                    </div>
+                                </div>`;
+
+                            if (dayName.includes('ادعية') || dayName.includes('المناجاة')) {
                                 html += `
                                     <details>
-                                        <summary>${section.title}</summary>
-                                        <div class="details-content pt-4">
-                                            <audio controls class="w-full">
-                                                <source src="${section.url}" type="audio/mpeg">
-                                                متصفحك لا يدعم عنصر الصوت.
-                                            </audio>
+                                        <summary class="font-semibold text-gray-700">${section.title}</summary>
+                                        <div class="details-content pt-0 pb-2">
+                                            ${playerHtml}
                                         </div>
                                     </details>`;
                             } else {
-                                // العرض العادي للبطاقة
                                 html += `
-                                    <div class="content-card">
-                                        <p class="text-lg font-semibold" style="color: var(--accent-color);">${section.title}</p>
-                                        <audio controls class="w-full mt-2">
-                                            <source src="${section.url}" type="audio/mpeg">
-                                            متصفحك لا يدعم عنصر الصوت.
-                                        </audio>
+                                    <div class="content-card bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                        <p class="font-bold text-blue-600 mb-2 text-sm">${section.title}</p>
+                                        ${playerHtml}
                                     </div>`;
                             }
                             break;
                     }
                 });
                 pageContent.innerHTML = html;
+                
+                // تفعيل مستمعي الأحداث الصوتية بعد تحميل المحتوى
+                setupAudioListeners();
             }
 
-            // --- 7. دالة النسخ إلى الحافظة (بدون تغيير) ---
+            // --- وظائف المسبحة المحدثة --- //
+            let tasbihState = {
+                mode: 'normal', // 'normal' or 'zahra'
+                count: 0,
+                limit: null, // null means infinite
+                zahraStage: 0, // 0: Allahu Akbar, 1: Alhamdulillah, 2: Subhanallah
+                zahraCount: 0
+            };
+
+            const zahraConfig = [
+                { text: 'الله أكبر', limit: 34 },
+                { text: 'الحمد لله', limit: 33 },
+                { text: 'سبحان الله', limit: 33 }
+            ];
+            
+            function parseArabicNumber(str) {
+                if(!str) return null;
+                // تحويل الأرقام العربية إلى إنجليزية
+                const arabicToEng = d => "٠١٢٣٤٥٦٧٨٩".indexOf(d);
+                let converted = str.replace(/[٠-٩]/g, arabicToEng);
+                // استخراج الرقم
+                const match = converted.match(/\d+/);
+                return match ? parseInt(match[0]) : null;
+            }
+
+            function playClick() {
+                if(clickSound) {
+                    clickSound.currentTime = 0;
+                    clickSound.play().catch(e=>{});
+                }
+            }
+
+            window.setZikrMode = function(mode, text, countText) {
+                tasbihState.mode = mode;
+                tasbihState.count = 0;
+                tasbihState.limit = null;
+
+                const label = document.getElementById('zikr-text');
+                const display = document.getElementById('tasbih-count');
+                const remainingDisplay = document.getElementById('tasbih-remaining');
+                const indicator = document.getElementById('zahra-indicator');
+
+                if (mode === 'zahra') {
+                    tasbihState.zahraStage = 0;
+                    tasbihState.zahraCount = 0;
+                    label.textContent = zahraConfig[0].text;
+                    display.textContent = 0;
+                    
+                    if(remainingDisplay) {
+                        remainingDisplay.textContent = zahraConfig[0].limit;
+                        remainingDisplay.classList.remove('hidden');
+                    }
+                    if(indicator) indicator.classList.remove('hidden');
+                    updateZahraIndicators();
+
+                } else {
+                    label.textContent = text || 'سبحان الله';
+                    display.textContent = 0;
+                    
+                    // محاولة استخراج العدد المطلوب من النص
+                    const limit = parseArabicNumber(countText);
+                    tasbihState.limit = limit;
+
+                    if (limit) {
+                        if(remainingDisplay) {
+                            remainingDisplay.textContent = limit;
+                            remainingDisplay.classList.remove('hidden');
+                        }
+                    } else {
+                        if(remainingDisplay) remainingDisplay.classList.add('hidden');
+                    }
+                    
+                    if(indicator) indicator.classList.add('hidden');
+                }
+                
+                if (navigator.vibrate) navigator.vibrate(50);
+            };
+
+            function updateZahraIndicators() {
+                for(let i=0; i<3; i++) {
+                    const dot = document.getElementById(`ind-${i}`);
+                    if(dot) {
+                        if(i === tasbihState.zahraStage) dot.className = "w-2 h-2 rounded-full bg-blue-500";
+                        else if(i < tasbihState.zahraStage) dot.className = "w-2 h-2 rounded-full bg-green-500";
+                        else dot.className = "w-2 h-2 rounded-full bg-gray-300";
+                    }
+                }
+            }
+
+            window.incrementTasbih = function() {
+                const display = document.getElementById('tasbih-count');
+                const remainingDisplay = document.getElementById('tasbih-remaining');
+                const label = document.getElementById('zikr-text');
+
+                if(!display) return;
+
+                // الصوت والاهتزاز
+                playClick();
+                if (navigator.vibrate) navigator.vibrate(30);
+
+                if (tasbihState.mode === 'normal') {
+                    tasbihState.count++;
+                    display.textContent = tasbihState.count;
+                    
+                    // تحديث المتبقي
+                    if(tasbihState.limit !== null && remainingDisplay) {
+                        let rem = tasbihState.limit - tasbihState.count;
+                        if (rem < 0) rem = 0;
+                        remainingDisplay.textContent = rem;
+                    }
+
+                } else if (tasbihState.mode === 'zahra') {
+                    // اذا انتهت المراحل
+                    if (tasbihState.zahraStage >= 3) return;
+
+                    tasbihState.zahraCount++;
+                    display.textContent = tasbihState.zahraCount;
+
+                    const currentLimit = zahraConfig[tasbihState.zahraStage].limit;
+
+                    // تحديث المتبقي
+                    if(remainingDisplay) {
+                        let rem = currentLimit - tasbihState.zahraCount;
+                        remainingDisplay.textContent = rem;
+                    }
+
+                    // التحقق من انتهاء المرحلة الحالية
+                    if (tasbihState.zahraCount >= currentLimit) {
+                        tasbihState.zahraStage++;
+                        
+                        if (tasbihState.zahraStage < 3) {
+                            // الانتقال للمرحلة التالية
+                            setTimeout(() => {
+                                tasbihState.zahraCount = 0;
+                                display.textContent = 0;
+                                label.textContent = zahraConfig[tasbihState.zahraStage].text;
+                                
+                                if(remainingDisplay) remainingDisplay.textContent = zahraConfig[tasbihState.zahraStage].limit;
+                                
+                                updateZahraIndicators();
+                                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                            }, 200); 
+                        } else {
+                            // انتهاء التسبيح كاملاً
+                            label.textContent = "تقبل الله أعمالكم";
+                            label.classList.add("text-green-600");
+                            if(remainingDisplay) remainingDisplay.classList.add('hidden');
+                            updateZahraIndicators();
+                            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        }
+                    }
+                }
+            };
+
+            window.resetTasbih = function() {
+                const display = document.getElementById('tasbih-count');
+                const remainingDisplay = document.getElementById('tasbih-remaining');
+                const label = document.getElementById('zikr-text');
+
+                if(display) {
+                    tasbihState.count = 0;
+                    display.textContent = 0;
+                    
+                    if(tasbihState.mode === 'zahra') {
+                        tasbihState.zahraStage = 0;
+                        tasbihState.zahraCount = 0;
+                        label.textContent = zahraConfig[0].text;
+                        label.classList.remove("text-green-600");
+                        if(remainingDisplay) {
+                            remainingDisplay.textContent = zahraConfig[0].limit;
+                            remainingDisplay.classList.remove('hidden');
+                        }
+                        updateZahraIndicators();
+                    } else {
+                        // Reset normal mode remaining if limit exists
+                        if (tasbihState.limit !== null && remainingDisplay) {
+                            remainingDisplay.textContent = tasbihState.limit;
+                        }
+                    }
+                    
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }
+            };
+
+            // --- وظائف مشغل الصوت الجديد --- //
+
+            // دالة مساعدة لتنسيق الوقت
+            window.formatTime = function(seconds) {
+                if (isNaN(seconds)) return "00:00";
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            };
+
+            // تشغيل/إيقاف
+            window.toggleAudio = function(id) {
+                const audio = document.getElementById(id);
+                const icon = document.getElementById(`icon-${id}`);
+                const btn = icon.parentElement;
+
+                if (audio.paused) {
+                    // إيقاف جميع المقاطع الأخرى
+                    document.querySelectorAll('audio').forEach(a => {
+                        if (a.id !== id && a.id !== 'tasbih-click-sound' && !a.paused) {
+                            a.pause();
+                            const otherIcon = document.getElementById(`icon-${a.id}`);
+                            if(otherIcon) otherIcon.textContent = 'play_arrow';
+                            if(otherIcon && otherIcon.parentElement) otherIcon.parentElement.classList.remove('playing');
+                        }
+                    });
+
+                    audio.play();
+                    icon.textContent = 'pause';
+                    btn.classList.add('playing');
+                } else {
+                    audio.pause();
+                    icon.textContent = 'play_arrow';
+                    btn.classList.remove('playing');
+                }
+            };
+
+            // تقديم وتأخير
+            window.seekAudio = function(id, val) {
+                const audio = document.getElementById(id);
+                if(audio.duration) {
+                    const seekTo = audio.duration * (val / 100);
+                    audio.currentTime = seekTo;
+                }
+            };
+
+            // إعداد مستمعي الأحداث (يتم استدعاؤه بعد الريندر)
+            function setupAudioListeners() {
+                const audios = document.querySelectorAll('audio');
+                audios.forEach(audio => {
+                    // تجاهل صوت النقر
+                    if(audio.id === 'tasbih-click-sound') return;
+
+                    const id = audio.id;
+                    const seekSlider = document.getElementById(`seek-${id}`);
+                    const currTime = document.getElementById(`curr-${id}`);
+                    const durTime = document.getElementById(`dur-${id}`);
+                    const icon = document.getElementById(`icon-${id}`);
+                    const btn = icon.parentElement;
+
+                    // عند تحميل البيانات الوصفية (لمعرفة الطول)
+                    audio.addEventListener('loadedmetadata', () => {
+                        durTime.textContent = formatTime(audio.duration);
+                    });
+
+                    // تحديث الشريط والوقت أثناء التشغيل
+                    audio.addEventListener('timeupdate', () => {
+                        if(audio.duration) {
+                            const progress = (audio.currentTime / audio.duration) * 100;
+                            seekSlider.value = progress;
+                            currTime.textContent = formatTime(audio.currentTime);
+                        }
+                    });
+
+                    // عند انتهاء المقطع
+                    audio.addEventListener('ended', () => {
+                        icon.textContent = 'play_arrow';
+                        btn.classList.remove('playing');
+                        seekSlider.value = 0;
+                        currTime.textContent = "00:00";
+                    });
+                });
+            }
+
+
+            // النسخ
             function copyToClipboard(text) {
                 try {
                     copyHelper.value = text;
                     copyHelper.select();
-                    copyHelper.setSelectionRange(0, 99999);
                     document.execCommand('copy');
-                    
-                    // إظهار رسالة تأكيد (Toast)
                     copyToast.classList.remove('opacity-0', 'translate-y-5');
-                    copyToast.classList.add('opacity-100', 'translate-y-0');
-                    
-                    setTimeout(() => {
-                        copyToast.classList.remove('opacity-100', 'translate-y-0');
-                        copyToast.classList.add('opacity-0', 'translate-y-5');
-                    }, 2000);
-
-                } catch (err) {
-                    console.error('فشل النسخ إلى الحافظة: ', err);
-                }
+                    setTimeout(() => copyToast.classList.add('opacity-0', 'translate-y-5'), 2000);
+                } catch (e) {}
             }
 
-            // --- 8. ربط الأحداث (بدون تغيير في المنطق) ---
-            
-            // أزرار الأيام
-            dayButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const dayName = button.getAttribute('data-day');
-                    
-                    if (dayName === "المناجاة الخمس عشرة") {
-                        pageTitle.textContent = "المناجاة الخمس عشرة";
-                    } else if (dayName === "ادعية") {
-                        pageTitle.textContent = "ادعية";
-                    } else if (dayName === "ادعية الجمعة") {
-                        pageTitle.textContent = "ادعية الجمعة";
-                    } else {
-                        pageTitle.textContent = `أعمال يوم ${dayName}`;
-                    }
-                    
+            // التنقل
+            dayButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const dayName = btn.getAttribute('data-day');
+                    pageTitle.textContent = dayName.includes('ادعية') || dayName.includes('المناجاة') ? dayName : `أعمال يوم ${dayName}`;
                     renderDayPage(dayName);
-                    
                     mainContainer.classList.add('hidden');
                     dayPageContainer.classList.remove('hidden');
+                    setTimeout(() => dayPageContainer.classList.remove('opacity-0'), 50);
                     window.scrollTo(0, 0);
                 });
             });
 
-            // زر الرجوع
             backButton.addEventListener('click', () => {
-                dayPageContainer.classList.add('hidden');
-                mainContainer.classList.remove('hidden');
-                // إيقاف أي صوتيات قد تكون شغالة عند الرجوع
-                pageContent.querySelectorAll('audio').forEach(audio => audio.pause());
+                dayPageContainer.classList.add('opacity-0');
+                setTimeout(() => {
+                    dayPageContainer.classList.add('hidden');
+                    mainContainer.classList.remove('hidden');
+                    // إيقاف جميع الأصوات عند الرجوع
+                    document.querySelectorAll('audio').forEach(a => { 
+                        if(a.id !== 'tasbih-click-sound') {
+                            a.pause(); 
+                            a.currentTime = 0; 
+                        }
+                    });
+                }, 300);
             });
-            
-            // ربط حدث النسخ
+
             pageContent.addEventListener('click', (e) => {
-                if (e.target.classList.contains('copy-btn')) {
-                    const textToCopy = e.target.getAttribute('data-text');
-                    if (textToCopy) {
-                        copyToClipboard(textToCopy);
-                    }
-                }
+                const btn = e.target.closest('.copy-btn');
+                if (btn) copyToClipboard(btn.getAttribute('data-text'));
             });
-        
+
         });
     </script>
-
 </body>
 </html>
+
 
