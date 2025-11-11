@@ -434,8 +434,28 @@
 
             // --- 2. جلب الموقع وأوقات الصلاة ---
             function initPrayerTimes() {
+                const cachedLocation = localStorage.getItem('user_location_cache');
+                if (cachedLocation) {
+                    try {
+                        const data = JSON.parse(cachedLocation);
+                        const now = Date.now();
+                        const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 week in ms
+
+                        // إذا كانت البيانات صالحة (أقل من أسبوع)
+                        if (now - data.timestamp < oneWeek) {
+                            updateLocationUI(data.city);
+                            fetchPrayerTimes(data.lat, data.lng);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Cache parse error", e);
+                    }
+                }
+
+                // إذا لم توجد بيانات مخزنة أو انتهت صلاحيتها
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(fetchData, handleError);
+                    locationStatus.innerHTML = `<span class="material-symbols-rounded text-base animate-pulse">location_searching</span> جاري تحديد الموقع...`;
+                    navigator.geolocation.getCurrentPosition(handlePositionSuccess, handleError);
                 } else {
                     locationStatus.textContent = "المتصفح لا يدعم تحديد الموقع.";
                 }
@@ -448,14 +468,50 @@
                 locationStatus.classList.add('text-red-500');
             }
 
-            function fetchData(position) {
+            function handlePositionSuccess(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                const timestamp = Math.floor(Date.now() / 1000);
                 
-                locationStatus.innerHTML = `<span class="material-symbols-rounded text-base animate-pulse">location_searching</span> جاري جلب اسم المدينة...`;
+                // 1. جلب اسم المدينة وتخزينه (Reverse Geocoding)
+                fetchCityAndCache(lat, lng);
+                
+                // 2. جلب أوقات الصلاة
+                fetchPrayerTimes(lat, lng);
+            }
 
-                // 1. جلب أوقات الصلاة
+            function fetchCityAndCache(lat, lng) {
+                 locationStatus.innerHTML = `<span class="material-symbols-rounded text-base animate-pulse">location_searching</span> جاري جلب اسم المدينة...`;
+                 fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=ar`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const city = data.city || data.locality || data.principalSubdivision || 'موقع محفوظ';
+                        updateLocationUI(city);
+                        saveLocationToCache(lat, lng, city);
+                    })
+                    .catch(() => {
+                        const fallback = 'موقع محفوظ';
+                        updateLocationUI(fallback);
+                        // حفظ الإحداثيات حتى لو فشل جلب الاسم لتجنب طلب الموقع مرة أخرى
+                        saveLocationToCache(lat, lng, fallback);
+                    });
+            }
+
+            function saveLocationToCache(lat, lng, city) {
+                const cacheData = {
+                    lat: lat,
+                    lng: lng,
+                    city: city,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('user_location_cache', JSON.stringify(cacheData));
+            }
+
+            function updateLocationUI(cityName) {
+                 locationStatus.innerHTML = `<span class="material-symbols-rounded text-green-600 text-sm">my_location</span> ${cityName}`;
+            }
+
+            function fetchPrayerTimes(lat, lng) {
+                const timestamp = Math.floor(Date.now() / 1000);
                 const apiUrl = `https://api.aladhan.com/v1/timings/${timestamp}?latitude=${lat}&longitude=${lng}&method=auto`;
 
                 fetch(apiUrl)
@@ -467,17 +523,7 @@
                     })
                     .catch(err => {
                         console.error("Error fetching prayer times:", err);
-                    });
-                
-                // 2. جلب اسم المدينة (Reverse Geocoding)
-                fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=ar`)
-                    .then(res => res.json())
-                    .then(data => {
-                        const city = data.city || data.locality || data.principalSubdivision || 'موقع غير معروف';
-                        locationStatus.innerHTML = `<span class="material-symbols-rounded text-green-600 text-sm">my_location</span> ${city}`;
-                    })
-                    .catch(() => {
-                        locationStatus.innerHTML = `<span class="material-symbols-rounded text-green-600 text-sm">my_location</span> تم تحديد الموقع`;
+                        locationStatus.textContent = "خطأ في جلب البيانات.";
                     });
             }
 
