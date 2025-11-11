@@ -21,6 +21,58 @@
     <!-- تحميل أيقونات Google Material Symbols (Rounded) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
     
+    <!-- Firebase Imports & Configuration -->
+    <script type="module">
+        // استيراد مكتبات Firebase عبر CDN للعمل مباشرة في المتصفح
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- إعدادات Firebase الخاصة بك ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyAlCUkzY-QaM5JfqN3YUx_F1xEHa3J_vF0",
+          authDomain: "jop-days.firebaseapp.com",
+          projectId: "jop-days",
+          storageBucket: "jop-days.firebasestorage.app",
+          messagingSenderId: "818575793723",
+          appId: "1:818575793723:web:6de2917b4920244ca2c61e"
+        };
+        
+        const appId = 'jop-days-app'; // معرف للتنظيم داخل القاعدة
+        
+        // تهيئة التطبيق
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // تسجيل الدخول المجهول (ضروري لقراءة/كتابة البيانات في Firebase)
+            signInAnonymously(auth).then((userCredential) => {
+                console.log("تم الاتصال بـ Firebase بنجاح. User ID:", userCredential.user.uid);
+                // تسجيل حدث فتح التطبيق
+                window.logAppAction("دخول", "فتح التطبيق");
+            }).catch((error) => {
+                console.error("فشل الاتصال بـ Firebase:", error);
+            });
+
+        } catch (e) {
+            console.error("خطأ في تهيئة Firebase:", e);
+        }
+
+        // تصدير الدوال للاستخدام العام في الصفحة
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.limit = limit;
+        window.getDocs = getDocs;
+        window.serverTimestamp = serverTimestamp;
+    </script>
+
     <style>
         :root {
             --primary-bg: #e0e5ec;
@@ -198,7 +250,7 @@
         .details-content { padding: 1rem; border-top: 1px solid rgba(0,0,0,0.05); line-height: 1.8; }
         
         /* Modal & Utilities */
-        #daily-modal-backdrop { display: none; animation: fadeIn 0.3s ease-out; }
+        #daily-modal-backdrop, #admin-pin-modal, #admin-dashboard-modal { display: none; animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         /* Copy Toast */
@@ -241,6 +293,59 @@
             font-weight: bold;
         }
 
+        /* Admin Dashboard Styles - تصميم محسن */
+        .admin-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            font-size: 0.8rem;
+        }
+        .admin-table th {
+            text-align: right;
+            padding: 10px;
+            color: #666;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            background: #e0e5ec;
+            z-index: 10;
+        }
+        .admin-table td {
+            background: #eef2f7;
+            padding: 10px;
+            border-bottom: 1px solid #fff;
+        }
+        .admin-table tr td:first-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+        .admin-table tr td:last-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+        
+        .stat-card {
+            background: #e0e5ec;
+            box-shadow: var(--inset-shadow);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .action-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .bg-blue-100 { background-color: #dbeafe; color: #1e40af; }
+        .bg-green-100 { background-color: #dcfce7; color: #166534; }
+        .bg-purple-100 { background-color: #f3e8ff; color: #6b21a8; }
+        .bg-amber-100 { background-color: #fef3c7; color: #92400e; }
+
     </style>
 </head>
 <body class="antialiased">
@@ -261,6 +366,80 @@
         </div>
     </div>
 
+    <!-- === مودال PIN للمسؤول === -->
+    <div id="admin-pin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md">
+        <div class="w-full max-w-xs p-6 neumo-outset rounded-2xl text-center space-y-4 bg-[#e0e5ec]">
+            <h3 class="text-lg font-bold text-gray-700">أدخل الرمز السري</h3>
+            <input type="password" id="admin-pin-input" class="neumo-inset w-full p-3 text-center text-xl tracking-widest rounded-xl bg-transparent focus:outline-none text-gray-700" placeholder="****" maxlength="4" inputmode="numeric">
+            <div class="flex gap-2">
+                <button id="cancel-pin-btn" class="neumo-outset-btn flex-1 py-2 text-red-500 font-bold">إلغاء</button>
+                <button id="submit-pin-btn" class="neumo-outset-btn flex-1 py-2 text-blue-600 font-bold">دخول</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === لوحة تحكم المسؤول (الإحصائيات) === -->
+    <div id="admin-dashboard-modal" class="fixed inset-0 z-50 flex items-center justify-center p-2 bg-gray-900/20 backdrop-blur-sm">
+        <div class="w-full max-w-4xl p-6 neumo-outset rounded-[30px] bg-[#e0e5ec] my-4 space-y-6 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-4 border-gray-300 shrink-0">
+                <h2 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                    <span class="material-symbols-rounded">analytics</span>
+                    لوحة الإحصائيات الشاملة
+                </h2>
+                <button id="close-admin-btn" class="neumo-outset-btn p-2 text-red-500 rounded-full">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <!-- بطاقات ملخص -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 shrink-0">
+                <div class="stat-card">
+                    <p class="text-xs text-gray-500 mb-1">الزوار (IP)</p>
+                    <h3 id="stat-total-visitors" class="text-2xl font-bold text-blue-600">...</h3>
+                </div>
+                <div class="stat-card">
+                    <p class="text-xs text-gray-500 mb-1">إجمالي النقرات</p>
+                    <h3 id="stat-total-actions" class="text-2xl font-bold text-gray-800">...</h3>
+                </div>
+                <div class="stat-card">
+                    <p class="text-xs text-gray-500 mb-1">جلسات التسبيح</p>
+                    <h3 id="stat-tasbih-sessions" class="text-2xl font-bold text-green-600">...</h3>
+                </div>
+                <div class="stat-card">
+                    <p class="text-xs text-gray-500 mb-1">أحدث نشاط</p>
+                    <h3 id="stat-last-time" class="text-xs font-bold text-gray-500 mt-1">...</h3>
+                </div>
+            </div>
+
+            <!-- جدول السجلات -->
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold text-gray-700">سجل التحركات المباشر (آخر 100)</h4>
+                    <button onclick="window.loadAnalyticsData()" class="text-xs text-blue-500 hover:underline flex items-center">
+                        <span class="material-symbols-rounded text-sm">refresh</span> تحديث
+                    </button>
+                </div>
+                <div class="neumo-inset p-2 rounded-xl admin-table-container flex-1 custom-scrollbar">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th class="w-24">الوقت</th>
+                                <th class="w-24">IP / الجهاز</th>
+                                <th class="w-32">المدينة</th>
+                                <th>نوع النشاط</th>
+                                <th>التفاصيل (ماذا فعل؟)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-table-body">
+                            <tr><td colspan="5" class="text-center text-gray-500 p-4">جاري الاتصال بقاعدة البيانات...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- === الحاوية الرئيسية === -->
     <div id="main-container" class="min-h-screen w-full flex items-center justify-center p-4 py-6">
 
@@ -269,7 +448,7 @@
             <!-- === قسم أوقات الصلاة والتاريخ (الجديد) === -->
             <div class="neumo-outset p-6 rounded-[30px] space-y-6 text-center relative overflow-hidden">
                 
-                <!-- رسالة الموقع (تظهر إذا لم يتم تحديد الموقع) -->
+                <!-- رسالة الموقع -->
                 <div id="location-status" class="text-sm text-gray-500 mb-2 flex items-center justify-center gap-1">
                     <span class="material-symbols-rounded text-base animate-pulse">location_searching</span>
                     <span>جاري تحديد الموقع...</span>
@@ -290,21 +469,18 @@
 
                 <!-- بطاقات الصلوات الثلاث -->
                 <div class="grid grid-cols-3 gap-3 mt-4">
-                    
                     <!-- الفجر -->
                     <div id="card-Fajr" class="prayer-card">
                         <span class="material-symbols-rounded text-amber-500 text-2xl mb-1">wb_twilight</span>
                         <span class="text-xs font-bold text-gray-500 mb-1">الصبح</span>
                         <span id="time-Fajr" class="text-sm font-bold text-gray-800" dir="ltr">--:--</span>
                     </div>
-
                     <!-- الظهر -->
                     <div id="card-Dhuhr" class="prayer-card">
                         <span class="material-symbols-rounded text-orange-500 text-2xl mb-1">light_mode</span>
                         <span class="text-xs font-bold text-gray-500 mb-1">الظهر</span>
                         <span id="time-Dhuhr" class="text-sm font-bold text-gray-800" dir="ltr">--:--</span>
                     </div>
-
                     <!-- المغرب -->
                     <div id="card-Maghrib" class="prayer-card">
                         <span class="material-symbols-rounded text-indigo-500 text-2xl mb-1">nights_stay</span>
@@ -379,8 +555,9 @@
 
             </div>
             
+            <!-- Footer with hidden admin access -->
             <footer class="text-center text-xs text-gray-400 pb-4">
-                By sauron
+                <span id="admin-access-btn" class="cursor-pointer hover:text-gray-500 transition-colors">By sauron</span>
             </footer>
         </div>
     </div>
@@ -411,6 +588,56 @@
 
 
     <script>
+        // --- Firebase Analytics Logging Helper ---
+        // وظيفة التسجيل: تستقبل نوع الحدث (مثلا: "تصفح")، وتفاصيل الحدث (مثلا: "فتح صفحة الجمعة")
+        window.logAppAction = async function(category, detail) {
+            if (!window.db || !window.auth || !window.addDoc || !window.collection) {
+                return;
+            }
+
+            try {
+                // جلب IP مرة واحدة وتخزينه لتوفير الطلبات
+                let ip = localStorage.getItem('user_ip_cache');
+                if (!ip) {
+                    try {
+                        const ipRes = await fetch('https://api.ipify.org?format=json');
+                        const ipData = await ipRes.json();
+                        ip = ipData.ip;
+                        localStorage.setItem('user_ip_cache', ip);
+                    } catch(e) { ip = 'غير معروف'; }
+                }
+
+                // جلب اسم المدينة من التخزين المؤقت
+                let locationName = 'غير محدد';
+                const cachedLocation = localStorage.getItem('user_location_cache');
+                if(cachedLocation) {
+                    const locData = JSON.parse(cachedLocation);
+                    locationName = locData.city;
+                }
+
+                const userId = window.auth.currentUser ? window.auth.currentUser.uid : 'زائر';
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                const deviceType = isMobile ? 'موبايل' : 'كمبيوتر';
+
+                // المسار في قاعدة البيانات
+                const collectionPath = `analytics_${window.appId}`;
+                
+                await window.addDoc(window.collection(window.db, collectionPath), {
+                    category: category, // نوع الحدث (تصفح، صوت، تسبيح)
+                    detail: detail,     // التفاصيل (اسم الصفحة، العدد)
+                    ip: ip,
+                    location: locationName,
+                    device: deviceType,
+                    userId: userId,
+                    timestamp: window.serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+                
+            } catch (e) {
+                // console.error("Error logging:", e);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 1. تهيئة المتغيرات ---
@@ -430,29 +657,144 @@
                 Maghrib: document.getElementById('card-Maghrib')
             };
 
-            let prayerTimesData = null; // لتخزين البيانات المجلوبة
+            // Admin Variables
+            const adminBtn = document.getElementById('admin-access-btn');
+            const pinModal = document.getElementById('admin-pin-modal');
+            const pinInput = document.getElementById('admin-pin-input');
+            const submitPinBtn = document.getElementById('submit-pin-btn');
+            const cancelPinBtn = document.getElementById('cancel-pin-btn');
+            const dashboardModal = document.getElementById('admin-dashboard-modal');
+            const closeAdminBtn = document.getElementById('close-admin-btn');
+            const tableBody = document.getElementById('analytics-table-body');
 
-            // --- 2. جلب الموقع وأوقات الصلاة ---
+            let prayerTimesData = null;
+
+            // --- Admin Logic ---
+            adminBtn.addEventListener('click', () => {
+                pinModal.style.display = 'flex';
+                pinInput.value = '';
+                pinInput.focus();
+            });
+
+            cancelPinBtn.addEventListener('click', () => {
+                pinModal.style.display = 'none';
+            });
+
+            submitPinBtn.addEventListener('click', checkPin);
+            pinInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkPin();
+            });
+
+            function checkPin() {
+                if (pinInput.value === '1420') {
+                    pinModal.style.display = 'none';
+                    openDashboard();
+                } else {
+                    alert('الرمز خاطئ');
+                    pinInput.value = '';
+                }
+            }
+
+            async function openDashboard() {
+                dashboardModal.style.display = 'flex';
+                window.loadAnalyticsData();
+            }
+
+            window.loadAnalyticsData = async function() {
+                if (!window.db || !window.getDocs) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">خطأ: قاعدة البيانات غير متصلة</td></tr>';
+                    return;
+                }
+
+                try {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">جاري تحميل البيانات المباشرة...</td></tr>';
+                    
+                    const collectionPath = `analytics_${window.appId}`;
+                    const q = window.query(
+                        window.collection(window.db, collectionPath),
+                        window.orderBy("timestamp", "desc"),
+                        window.limit(100) 
+                    );
+
+                    const querySnapshot = await window.getDocs(q);
+                    
+                    let html = '';
+                    let uniqueIPs = new Set();
+                    let tasbihSessions = 0;
+
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        if(data.ip) uniqueIPs.add(data.ip);
+                        if(data.category === 'تسبيح') tasbihSessions++;
+                        
+                        const date = data.timestamp ? new Date(data.timestamp.seconds * 1000) : new Date();
+                        const timeStr = date.toLocaleTimeString('ar-EG');
+                        const dateStr = date.toLocaleDateString('ar-EG');
+
+                        // Badge Color Logic
+                        let badgeClass = "bg-gray-100 text-gray-800";
+                        if (data.category === 'تصفح') badgeClass = "bg-blue-100";
+                        if (data.category === 'تسبيح') badgeClass = "bg-green-100";
+                        if (data.category === 'صوتيات') badgeClass = "bg-purple-100";
+                        if (data.category === 'دخول') badgeClass = "bg-amber-100";
+
+                        html += `
+                            <tr>
+                                <td class="text-xs text-gray-500" dir="ltr">${dateStr} <br> ${timeStr}</td>
+                                <td class="text-xs">
+                                    <div class="font-mono text-blue-600">${data.ip || 'N/A'}</div>
+                                    <div class="text-gray-400 text-[10px]">${data.device || 'Web'}</div>
+                                </td>
+                                <td class="text-xs font-bold text-gray-600">${data.location || 'غير محدد'}</td>
+                                <td><span class="action-badge ${badgeClass}">${data.category || 'عام'}</span></td>
+                                <td class="text-sm font-bold text-gray-800">${data.detail}</td>
+                            </tr>
+                        `;
+                    });
+
+                    if (html === '') html = '<tr><td colspan="5" class="text-center p-4">لا توجد سجلات بعد</td></tr>';
+                    
+                    tableBody.innerHTML = html;
+                    
+                    // Update stats cards
+                    document.getElementById('stat-total-visitors').textContent = uniqueIPs.size;
+                    document.getElementById('stat-total-actions').textContent = querySnapshot.size + (querySnapshot.size === 100 ? '+' : '');
+                    document.getElementById('stat-tasbih-sessions').textContent = tasbihSessions;
+                    
+                    if (querySnapshot.docs.length > 0) {
+                        const last = querySnapshot.docs[0].data();
+                        const lastTime = last.timestamp ? new Date(last.timestamp.seconds * 1000).toLocaleTimeString('ar-EG') : '';
+                        document.getElementById('stat-last-time').textContent = `منذ: ${lastTime}`;
+                    }
+
+                } catch (e) {
+                    console.error(e);
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-500">حدث خطأ: ${e.message}</td></tr>`;
+                }
+            };
+
+            closeAdminBtn.addEventListener('click', () => {
+                dashboardModal.style.display = 'none';
+            });
+
+
+            // --- 2. جلب الموقع وأوقات الصلاة (نفس الكود السابق) ---
             function initPrayerTimes() {
                 const cachedLocation = localStorage.getItem('user_location_cache');
                 if (cachedLocation) {
                     try {
                         const data = JSON.parse(cachedLocation);
                         const now = Date.now();
-                        const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 week in ms
+                        const oneWeek = 7 * 24 * 60 * 60 * 1000; 
 
-                        // إذا كانت البيانات صالحة (أقل من أسبوع)
                         if (now - data.timestamp < oneWeek) {
                             updateLocationUI(data.city);
                             fetchPrayerTimes(data.lat, data.lng);
                             return;
                         }
-                    } catch (e) {
-                        console.error("Cache parse error", e);
-                    }
+                    } catch (e) { console.error("Cache error", e); }
                 }
 
-                // إذا لم توجد بيانات مخزنة أو انتهت صلاحيتها
                 if (navigator.geolocation) {
                     locationStatus.innerHTML = `<span class="material-symbols-rounded text-base animate-pulse">location_searching</span> جاري تحديد الموقع...`;
                     navigator.geolocation.getCurrentPosition(handlePositionSuccess, handleError);
@@ -462,20 +804,14 @@
             }
 
             function handleError(error) {
-                let msg = "تعذر تحديد الموقع.";
-                if (error.code === 1) msg = "يرجى السماح بتحديد الموقع لعرض أوقات الصلاة.";
-                locationStatus.textContent = msg;
+                locationStatus.textContent = "تعذر تحديد الموقع.";
                 locationStatus.classList.add('text-red-500');
             }
 
             function handlePositionSuccess(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                
-                // 1. جلب اسم المدينة وتخزينه (Reverse Geocoding)
                 fetchCityAndCache(lat, lng);
-                
-                // 2. جلب أوقات الصلاة
                 fetchPrayerTimes(lat, lng);
             }
 
@@ -487,22 +823,18 @@
                         const city = data.city || data.locality || data.principalSubdivision || 'موقع محفوظ';
                         updateLocationUI(city);
                         saveLocationToCache(lat, lng, city);
+                        // تسجيل الموقع الجديد في التحليلات
+                        window.logAppAction("تحديث موقع", `تم تحديد: ${city}`);
                     })
                     .catch(() => {
                         const fallback = 'موقع محفوظ';
                         updateLocationUI(fallback);
-                        // حفظ الإحداثيات حتى لو فشل جلب الاسم لتجنب طلب الموقع مرة أخرى
                         saveLocationToCache(lat, lng, fallback);
                     });
             }
 
             function saveLocationToCache(lat, lng, city) {
-                const cacheData = {
-                    lat: lat,
-                    lng: lng,
-                    city: city,
-                    timestamp: Date.now()
-                };
+                const cacheData = { lat: lat, lng: lng, city: city, timestamp: Date.now() };
                 localStorage.setItem('user_location_cache', JSON.stringify(cacheData));
             }
 
@@ -521,32 +853,18 @@
                             updateDashboard(data.data);
                         }
                     })
-                    .catch(err => {
-                        console.error("Error fetching prayer times:", err);
-                        locationStatus.textContent = "خطأ في جلب البيانات.";
-                    });
+                    .catch(err => { console.error(err); });
             }
 
             function updateDashboard(data) {
                 const timings = data.timings;
                 const hijri = data.date.hijri;
-
-                // 1. تحديث التاريخ (هجري فقط)
                 hijriDateDisplay.textContent = `${hijri.weekday.ar}, ${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
                 
-                // 2. تحديث أوقات الصلوات الثلاث (تنسيق 12 ساعة)
-                prayerTimesData = {
-                    Fajr: timings.Fajr,
-                    Dhuhr: timings.Dhuhr,
-                    Maghrib: timings.Maghrib
-                };
-
+                prayerTimesData = { Fajr: timings.Fajr, Dhuhr: timings.Dhuhr, Maghrib: timings.Maghrib };
                 for (let [key, timeStr] of Object.entries(prayerTimesData)) {
-                    // timeStr comes as HH:MM (24h)
                     prayerTimesEls[key].textContent = convertTo12Hour(timeStr);
                 }
-
-                // 3. بدء العد التنازلي
                 startCountdown(timings);
             }
 
@@ -570,22 +888,16 @@
                     let nextPrayer = null;
                     let minDiff = Infinity;
 
-                    // البحث عن الصلاة القادمة اليوم
                     for (let p of prayersOrder) {
                         const pTime = new Date();
                         const [h, m] = timings[p.key].split(':');
                         pTime.setHours(h, m, 0, 0);
-
                         if (pTime > now) {
                             const diff = pTime - now;
-                            if (diff < minDiff) {
-                                minDiff = diff;
-                                nextPrayer = { ...p, time: pTime };
-                            }
+                            if (diff < minDiff) { minDiff = diff; nextPrayer = { ...p, time: pTime }; }
                         }
                     }
 
-                    // إذا لم نجد صلاة اليوم (أي نحن بعد المغرب)، فالصلاة القادمة هي الفجر غداً
                     if (!nextPrayer) {
                         const pTime = new Date();
                         pTime.setDate(pTime.getDate() + 1);
@@ -595,23 +907,14 @@
                         minDiff = pTime - now;
                     }
 
-                    // تحديث الواجهة
                     nextPrayerName.textContent = nextPrayer.name;
-                    
-                    // تمييز البطاقة النشطة
                     document.querySelectorAll('.prayer-card').forEach(c => c.classList.remove('active-prayer'));
-                    if (prayerCards[nextPrayer.key]) {
-                        prayerCards[nextPrayer.key].classList.add('active-prayer');
-                    }
+                    if (prayerCards[nextPrayer.key]) prayerCards[nextPrayer.key].classList.add('active-prayer');
 
-                    // تنسيق الوقت المتبقي
                     const hours = Math.floor((minDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((minDiff % (1000 * 60)) / 1000);
-
-                    countdownTimer.textContent = 
-                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
+                    countdownTimer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }, 1000);
             }
 
@@ -619,6 +922,7 @@
             initPrayerTimes();
 
             // --- (بيانات الأيام) ---
+            // ... (تم الاحتفاظ بنفس البيانات) ...
             const daysData = {
                 "الجمعة": {
                     sections: [
@@ -637,7 +941,7 @@
                         { type: 'card', content: '✅ يصح فيه ( الحجامة والفصد) .', style: 'text-green-700 font-semibold' },
                         { type: 'card', content: '❎ يكره تقليم الاظافر يوم السبت (من قلم أظافره يوم السبت وقعت الآكلة في أصابعه)', style: 'text-red-600 font-semibold' },
                         { type: 'card', content: '❎ لا يصلح فيه شراء أو خياطة أو أقتناء الثياب والملابس.', style: 'text-red-600 font-semibold' },
-                        { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة إلى الضحى والعصر و رديئة ،عند العصر والضحى .' },
+                        { type: 'card', content: '<strong>🕛 وقت الاستخارة:</strong> جيدة إلى الضحى والعصر و رديئة ،عند الزوال والعشاء .' },
                         { type: 'copyable', title: '۞ تسبيح اليوم:', text: 'يارب العالمين يا رحمن يا رحيم', subtext: '( ١٠٠ )مرة.' },
                         { type: 'card', content: '<strong>۞ مناجاة اليوم:</strong> المحبين + الشاكين + المطيعين لله' },
                         { type: 'card', content: '<strong>۞ زيارة اليوم :</strong> زيارة النبي الاكرم صلى الله عليه وآله وسلم .' },
@@ -854,6 +1158,9 @@
                     return;
                 }
 
+                // تسجيل زيارة صفحة معينة
+                window.logAppAction("تصفح", `عرض صفحة: ${dayName}`);
+
                 let html = '';
                 data.sections.forEach(section => {
                     const style = section.style || 'text-gray-700';
@@ -967,7 +1274,7 @@
                             const uniqueId = 'audio-' + Math.random().toString(36).substr(2, 9);
                             const playerHtml = `
                                 <div class="custom-player-card" id="player-card-${uniqueId}">
-                                    <audio id="${uniqueId}" src="${section.url}" preload="none"></audio>
+                                    <audio id="${uniqueId}" src="${section.url}" preload="none" onplay="window.logAppAction('صوتيات', 'تشغيل: ${section.title}')"></audio>
                                     <button class="play-btn" onclick="toggleAudio('${uniqueId}')">
                                         <span class="material-symbols-rounded text-2xl" id="icon-${uniqueId}">play_arrow</span>
                                     </button>
@@ -1010,7 +1317,8 @@
                 count: 0,
                 limit: null, // null means infinite
                 zahraStage: 0, // 0: Allahu Akbar, 1: Alhamdulillah, 2: Subhanallah
-                zahraCount: 0
+                zahraCount: 0,
+                currentZikrName: 'عام'
             };
 
             const zahraConfig = [
@@ -1040,6 +1348,10 @@
                 tasbihState.mode = mode;
                 tasbihState.count = 0;
                 tasbihState.limit = null;
+                tasbihState.currentZikrName = text || (mode === 'zahra' ? 'تسبيح الزهراء (ع)' : 'عام');
+
+                // تسجيل بدء تسبيح جديد
+                window.logAppAction('تسبيح', `بدء: ${tasbihState.currentZikrName}`);
 
                 const label = document.getElementById('zikr-text');
                 const display = document.getElementById('tasbih-count');
@@ -1152,6 +1464,10 @@
                             label.classList.add("text-green-600");
                             if(remainingDisplay) remainingDisplay.classList.add('hidden');
                             updateZahraIndicators();
+                            
+                            // تسجيل إكمال تسبيح الزهراء
+                            window.logAppAction('تسبيح', 'إتمام تسبيح الزهراء (ع)');
+                            
                             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                         }
                     }
@@ -1164,6 +1480,11 @@
                 const label = document.getElementById('zikr-text');
 
                 if(display) {
+                    // تسجيل العدد قبل التصفير إذا كان ذا قيمة
+                    if(tasbihState.count > 5 || (tasbihState.mode === 'zahra' && tasbihState.zahraStage > 0)) {
+                         window.logAppAction('تسبيح', `تصفير (${tasbihState.currentZikrName}): وصل للعدد ${tasbihState.count || 'مرحلة ' + tasbihState.zahraStage}`);
+                    }
+
                     tasbihState.count = 0;
                     display.textContent = 0;
                     
